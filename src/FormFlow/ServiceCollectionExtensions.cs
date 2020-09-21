@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using FormFlow.Filters;
+using FormFlow.Metadata;
 using FormFlow.ModelBinding;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,22 @@ namespace FormFlow
             services.TryAddSingleton<IStateSerializer, JsonStateSerializer>();
             services.TryAddSingleton<IUserInstanceStateProvider, UserInstanceStateProvider>();
             services.TryAddSingleton<IUserInstanceStateStore, SessionUserInstanceStateStore>();
+
+            services.TryAddTransient<FormFlowInstanceFactory>(sp =>
+            {
+                var actionContextAccessor = sp.GetRequiredService<IActionContextAccessor>();
+                var actionContext = actionContextAccessor.ActionContext;
+
+                var flowDescriptor = FormFlowDescriptor.FromActionContext(actionContext);
+                if (flowDescriptor == null)
+                {
+                    throw new InvalidOperationException("Current action has no FormFlow metadata available.");
+                }
+
+                var stateProvider = sp.GetRequiredService<IUserInstanceStateProvider>();
+
+                return new FormFlowInstanceFactory(flowDescriptor, actionContext, stateProvider);
+            });
 
             services.Configure<MvcOptions>(options =>
             {
