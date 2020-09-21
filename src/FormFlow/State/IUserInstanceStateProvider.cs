@@ -14,6 +14,8 @@ namespace FormFlow.State
             object state,
             IReadOnlyDictionary<object, object> properties);
 
+        void DeleteInstance(FormFlowInstanceId instanceId);
+
         FormFlowInstance GetInstance(FormFlowInstanceId instanceId);
 
         void UpdateInstanceState(FormFlowInstanceId instanceId, object state);
