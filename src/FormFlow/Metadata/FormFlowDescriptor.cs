@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace FormFlow.Metadata
 {
@@ -40,5 +42,15 @@ namespace FormFlow.Metadata
         public Type StateType { get; }
         public IdGenerationSource IdGenerationSource { get; }
         public IReadOnlyCollection<string> IdRouteParameterNames { get; }
+
+        public static FormFlowDescriptor FromActionContext(ActionContext actionContext)
+        {
+            if (actionContext is null)
+            {
+                throw new ArgumentNullException(nameof(actionContext));
+            }
+
+            return actionContext.ActionDescriptor.GetProperty<FormFlowDescriptor>();
+        }
     }
 }

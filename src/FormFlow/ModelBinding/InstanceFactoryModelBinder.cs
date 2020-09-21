@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using FormFlow.Metadata;
 using FormFlow.State;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace FormFlow.ModelBinding
@@ -23,7 +22,7 @@ namespace FormFlow.ModelBinding
                 return Task.CompletedTask;
             }
 
-            var flowDescriptor = bindingContext.ActionContext.ActionDescriptor.GetProperty<FormFlowDescriptor>();
+            var flowDescriptor = FormFlowDescriptor.FromActionContext(bindingContext.ActionContext);
             if (flowDescriptor == null)
             {
                 return Task.CompletedTask;
