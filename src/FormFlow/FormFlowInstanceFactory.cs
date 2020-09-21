@@ -12,6 +12,7 @@ namespace FormFlow
         private readonly FormFlowDescriptor _flowDescriptor;
         private readonly ActionContext _actionContext;
         private readonly IUserInstanceStateProvider _stateProvider;
+        private readonly InstanceResolver _instanceResolver;
 
         public FormFlowInstanceFactory(
             FormFlowDescriptor flowDescriptor,
@@ -21,6 +22,7 @@ namespace FormFlow
             _flowDescriptor = flowDescriptor ?? throw new ArgumentNullException(nameof(flowDescriptor));
             _actionContext = actionContext ?? throw new ArgumentNullException(nameof(actionContext));
             _stateProvider = stateProvider ?? throw new ArgumentNullException(nameof(stateProvider));
+            _instanceResolver = new InstanceResolver(_stateProvider);
         }
         
         public FormFlowInstance<TState> CreateInstance<TState>(
@@ -69,7 +71,7 @@ namespace FormFlow
                     $"{typeof(TState).Name} is not compatible with {_flowDescriptor.StateType.Name}.");
             }
 
-            var currentInstance = _actionContext.HttpContext.Features.Get<FormFlowInstanceFeature>()?.Instance;
+            var currentInstance = GetExistingInstance();
             if (currentInstance != null)
             {
                 return (FormFlowInstance<TState>)currentInstance;
@@ -95,7 +97,7 @@ namespace FormFlow
                     $"{typeof(TState).Name} is not compatible with {_flowDescriptor.StateType.Name}.");
             }
 
-            var currentInstance = _actionContext.HttpContext.Features.Get<FormFlowInstanceFeature>()?.Instance;
+            var currentInstance = GetExistingInstance();
             if (currentInstance != null)
             {
                 return (FormFlowInstance<TState>)currentInstance;
@@ -105,5 +107,9 @@ namespace FormFlow
 
             return CreateInstance(newState, properties);
         }
+
+        private FormFlowInstance GetExistingInstance() =>
+            _actionContext.HttpContext.Features.Get<FormFlowInstanceFeature>()?.Instance ??
+                _instanceResolver.Resolve(_actionContext);
     }
 }
