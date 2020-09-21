@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using FormFlow.Metadata;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -15,7 +14,7 @@ namespace FormFlow.Filters
 
         public void OnActionExecuting(ActionExecutingContext context)
         {
-            var flowDescriptor = context.ActionDescriptor.GetProperty<FormFlowDescriptor>();
+            var flowDescriptor = FormFlowDescriptor.FromActionContext(context);
             if (flowDescriptor == null)
             {
                 return;

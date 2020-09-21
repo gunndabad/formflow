@@ -2,7 +2,6 @@
 using FormFlow.Metadata;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace FormFlow
 {
@@ -21,8 +20,8 @@ namespace FormFlow
             {
                 throw new ArgumentNullException(nameof(actionContext));
             }
-            
-            var flowDescriptor = actionContext.ActionDescriptor.GetProperty<FormFlowDescriptor>();
+
+            var flowDescriptor = FormFlowDescriptor.FromActionContext(actionContext);
             if (flowDescriptor == null)
             {
                 return null;
