@@ -28,6 +28,8 @@ namespace FormFlow
 
         public bool Completed { get; private set; }
 
+        public bool Deleted { get; private set; }
+
         public string Key { get; }
 
         public FormFlowInstanceId InstanceId { get; }
@@ -66,8 +68,24 @@ namespace FormFlow
                 return;
             }
 
+            if (Deleted)
+            {
+                throw new InvalidOperationException("Instance has been deleted.");
+            }
+
             _stateProvider.CompleteInstance(InstanceId);
             Completed = true;
+        }
+
+        public void Delete()
+        {
+            if (Deleted)
+            {
+                return;
+            }
+
+            _stateProvider.DeleteInstance(InstanceId);
+            Deleted = true;
         }
 
         internal static bool IsFormFlowInstanceType(Type type)
@@ -96,6 +114,11 @@ namespace FormFlow
             if (Completed)
             {
                 throw new InvalidOperationException("Instance has been completed.");
+            }
+
+            if (Deleted)
+            {
+                throw new InvalidOperationException("Instance has been deleted.");
             }
 
             _stateProvider.UpdateInstanceState(InstanceId, state);

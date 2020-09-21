@@ -12,6 +12,13 @@ namespace FormFlow.State
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         }
 
+        public void DeleteState(string key)
+        {
+            var session = GetSession();
+
+            session.Remove(key);
+        }
+
         public void SetState(string key, byte[] data)
         {
             var session = GetSession();

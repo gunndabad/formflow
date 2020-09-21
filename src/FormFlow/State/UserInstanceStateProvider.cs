@@ -75,6 +75,20 @@ namespace FormFlow.State
             }
         }
 
+        public void DeleteInstance(FormFlowInstanceId instanceId)
+        {
+            var storeKey = GetKeyForInstance(instanceId);
+
+            if (_store.TryGetState(storeKey, out var serialized))
+            {
+                _store.DeleteState(storeKey);
+            }
+            else
+            {
+                throw new ArgumentException("Instance does not exist.", nameof(instanceId));
+            }
+        }
+
         public FormFlowInstance GetInstance(FormFlowInstanceId instanceId)
         {
             var storeKey = GetKeyForInstance(instanceId);
