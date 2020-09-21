@@ -43,7 +43,7 @@ namespace FormFlow.Tests
 
         public void CompleteInstance(FormFlowInstanceId instanceId)
         {
-            _instances.Remove(instanceId);
+            _instances[instanceId].Completed = true;
         }
 
         public FormFlowInstance GetInstance(FormFlowInstanceId instanceId)
@@ -51,7 +51,7 @@ namespace FormFlow.Tests
             _instances.TryGetValue(instanceId, out var entry);
 
             var instance = entry != null ?
-                FormFlowInstance.Create(this, entry.Key, instanceId, entry.StateType, entry.State, entry.Properties) :
+                FormFlowInstance.Create(this, entry.Key, instanceId, entry.StateType, entry.State, entry.Properties, entry.Completed) :
                 null;
 
             return instance;
@@ -68,6 +68,7 @@ namespace FormFlow.Tests
             public IReadOnlyDictionary<object, object> Properties { get; set; }
             public object State { get; set; }
             public Type StateType { get; set; }
+            public bool Completed { get; set; }
         }
     }
 }
