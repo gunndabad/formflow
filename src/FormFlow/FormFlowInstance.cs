@@ -143,6 +143,12 @@ namespace FormFlow
 
         public void UpdateState(TState state) => UpdateState((object)state);
 
+        public void UpdateState(Action<TState> update)
+        {
+            update(State);
+            UpdateState(State);
+        }
+
         public void UpdateState(Func<TState, TState> update)
         {
             if (update == null)
