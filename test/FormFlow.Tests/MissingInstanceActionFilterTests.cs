@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FormFlow.Filters;
 using FormFlow.Metadata;
+using FormFlow.State;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
@@ -32,6 +33,7 @@ namespace FormFlow.Tests
 
             var services = new ServiceCollection()
                 .AddSingleton(Options.Create(options))
+                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
                 .BuildServiceProvider();
 
             var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
@@ -78,6 +80,7 @@ namespace FormFlow.Tests
 
             var services = new ServiceCollection()
                 .AddSingleton(Options.Create(options))
+                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
                 .BuildServiceProvider();
 
             var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
@@ -135,6 +138,7 @@ namespace FormFlow.Tests
 
             var services = new ServiceCollection()
                 .AddSingleton(Options.Create(options))
+                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
                 .BuildServiceProvider();
 
             var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
@@ -204,6 +208,7 @@ namespace FormFlow.Tests
 
             var services = new ServiceCollection()
                 .AddSingleton(Options.Create(options))
+                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
                 .BuildServiceProvider();
 
             var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
@@ -225,6 +230,59 @@ namespace FormFlow.Tests
                 }
             };
             actionDescriptor.SetProperty(flowDescriptor);
+            actionDescriptor.SetProperty(RequiresInstanceMarker.Instance);
+
+            var actionContext = new ActionContext(httpContext, routeData, actionDescriptor);
+
+            var actionArguments = new Dictionary<string, object>();
+
+            var context = new ActionExecutingContext(
+                actionContext,
+                new List<IFilterMetadata>(),
+                actionArguments,
+                controller: null);
+
+            var filter = new MissingInstanceActionFilter();
+
+            // Act
+            filter.OnActionExecuting(context);
+
+            // Assert
+            Assert.IsType<CustomResult>(context.Result);
+        }
+
+        [Fact]
+        public void OnActionExecuting_ActionDecoratedWithRequiresFormFlowInstanceAttributeAndNoInstance_SetsResult()
+        {
+            // Arrange
+            var key = "key";
+            var stateType = typeof(MyState);
+
+            MissingInstanceHandler handler = (flowDescriptor, httpContext) => new CustomResult();
+
+            var options = new FormFlowOptions()
+            {
+                MissingInstanceHandler = handler
+            };
+
+            var services = new ServiceCollection()
+                .AddSingleton(Options.Create(options))
+                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
+                .BuildServiceProvider();
+
+            var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.RequestServices = services;
+
+            var routeData = new RouteData();
+
+            var actionDescriptor = new ActionDescriptor()
+            {
+                Parameters = new List<ParameterDescriptor>()
+            };
+            actionDescriptor.SetProperty(flowDescriptor);
+            actionDescriptor.SetProperty(RequiresInstanceMarker.Instance);
 
             var actionContext = new ActionContext(httpContext, routeData, actionDescriptor);
 

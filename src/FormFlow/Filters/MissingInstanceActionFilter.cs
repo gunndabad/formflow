@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using FormFlow.Metadata;
+using FormFlow.State;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -39,6 +40,25 @@ namespace FormFlow.Filters
                     return;
                 }
             }
+
+            if (context.ActionDescriptor.Properties.ContainsKey(typeof(RequiresInstanceMarker)))
+            {
+                var instanceResolver = new InstanceResolver(
+                    context.HttpContext.RequestServices.GetRequiredService<IUserInstanceStateProvider>());
+
+                if (instanceResolver.Resolve(context) == null)
+                {
+                    context.Result = options.MissingInstanceHandler(flowDescriptor, context.HttpContext);
+                    return;
+                }
+            }
         }
+    }
+
+    internal sealed class RequiresInstanceMarker
+    {
+        private RequiresInstanceMarker() { }
+
+        public static RequiresInstanceMarker Instance { get; } = new RequiresInstanceMarker();
     }
 }
