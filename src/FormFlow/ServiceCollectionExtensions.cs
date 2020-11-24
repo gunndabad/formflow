@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reflection;
 using FormFlow.Filters;
 using FormFlow.Metadata;
-using FormFlow.ModelBinding;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -47,9 +46,6 @@ namespace FormFlow
             services.Configure<MvcOptions>(options =>
             {
                 options.Filters.Add(new MissingInstanceActionFilter());
-
-                options.ModelBinderProviders.Insert(0, new InstanceFactoryModelBinderProvider());
-                options.ModelBinderProviders.Insert(0, new InstanceModelBinderProvider());
             });
 
             return services;
