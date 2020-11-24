@@ -1,316 +1,91 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
-using FormFlow.Filters;
-using FormFlow.Metadata;
-using FormFlow.State;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace FormFlow.Tests
 {
-    public class MissingInstanceActionFilterTests
+    public class MissingInstanceActionFilterTests : MvcTestBase
     {
-        [Fact]
-        public void OnActionExecuting_ActionHasNoFlowDescriptor_DoesNotSetResult()
+        public MissingInstanceActionFilterTests(MvcTestFixture fixture)
+            : base(fixture)
         {
-            // Arrange
-            var key = "key";
-            var stateType = typeof(MyState);
-
-            MissingInstanceHandler handler = (flowDescriptor, httpContext) => new CustomResult();
-
-            var options = new FormFlowOptions()
-            {
-                MissingInstanceHandler = handler
-            };
-
-            var services = new ServiceCollection()
-                .AddSingleton(Options.Create(options))
-                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
-                .BuildServiceProvider();
-
-            var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
-
-            var httpContext = new DefaultHttpContext();
-            httpContext.RequestServices = services;
-
-            var routeData = new RouteData();
-
-            var actionDescriptor = new ActionDescriptor();
-
-            var actionContext = new ActionContext(httpContext, routeData, actionDescriptor);
-
-            var actionArguments = new Dictionary<string, object>();
-
-            var context = new ActionExecutingContext(
-                actionContext,
-                new List<IFilterMetadata>(),
-                actionArguments,
-                controller: null);
-
-            var filter = new MissingInstanceActionFilter();
-
-            // Act
-            filter.OnActionExecuting(context);
-
-            // Assert
-            Assert.Null(context.Result);
         }
 
         [Fact]
-        public void OnActionExecuting_OptionsHaveNullHandler_DoesNotSetResult()
+        public async Task RequireFormFlowInstanceSpecifiedButNoActiveInstance_ReturnsNotFound()
         {
             // Arrange
-            var key = "key";
-            var stateType = typeof(MyState);
+            var id = 42;
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"MissingInstanceActionFilterTests/{id}/withattribute");
 
-            MissingInstanceHandler handler = null;
+            // Act
+            var response = await HttpClient.SendAsync(request);
 
-            var options = new FormFlowOptions()
-            {
-                MissingInstanceHandler = handler
-            };
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
 
-            var services = new ServiceCollection()
-                .AddSingleton(Options.Create(options))
-                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
-                .BuildServiceProvider();
-
-            var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
-
-            var httpContext = new DefaultHttpContext();
-            httpContext.RequestServices = services;
-
-            var routeData = new RouteData();
-
-            var actionDescriptor = new ActionDescriptor()
-            {
-                Parameters = new List<ParameterDescriptor>()
+        [Fact]
+        public async Task RequireFormFlowInstanceSpecifiedWithActiveInstance_ReturnsOk()
+        {
+            // Arrange
+            CreateInstanceForRouteParameters(
+                key: "MissingInstanceActionFilterTests",
+                routeParameters: new Dictionary<string, object>()
                 {
-                    new ParameterDescriptor()
-                    {
-                        Name = "instance",
-                        ParameterType = typeof(FormFlowInstance)
-                    }
-                }
-            };
-            actionDescriptor.SetProperty(flowDescriptor);
+                    { "id", "42" }
+                },
+                state: new MissingInstanceActionFilterTestsState());
 
-            var actionContext = new ActionContext(httpContext, routeData, actionDescriptor);
-
-            var actionArguments = new Dictionary<string, object>();
-
-            var context = new ActionExecutingContext(
-                actionContext,
-                new List<IFilterMetadata>(),
-                actionArguments,
-                controller: null);
-
-            var filter = new MissingInstanceActionFilter();
+            var id = 42;
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"MissingInstanceActionFilterTests/{id}/withattribute");
 
             // Act
-            filter.OnActionExecuting(context);
+            var response = await HttpClient.SendAsync(request);
 
             // Assert
-            Assert.Null(context.Result);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
-        public void OnActionExecuting_InstanceArgumentIsBound_DoesNotSetResult()
+        public async Task RequireFormFlowInstanceSpecifiedButNoMetadata_Throws()
         {
             // Arrange
-            var key = "key";
-            var stateType = typeof(MyState);
+            var id = 42;
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"MissingInstanceActionFilterTests/{id}/withoutmetadata");
 
-            MissingInstanceHandler handler = (flowDescriptor, httpContext) => new CustomResult();
-
-            var options = new FormFlowOptions()
-            {
-                MissingInstanceHandler = handler
-            };
-
-            var services = new ServiceCollection()
-                .AddSingleton(Options.Create(options))
-                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
-                .BuildServiceProvider();
-
-            var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
-
-            var httpContext = new DefaultHttpContext();
-            httpContext.RequestServices = services;
-
-            var routeData = new RouteData();
-
-            var actionDescriptor = new ActionDescriptor()
-            {
-                Parameters = new List<ParameterDescriptor>()
-                {
-                    new ParameterDescriptor()
-                    {
-                        Name = "instance",
-                        ParameterType = typeof(FormFlowInstance)
-                    }
-                }
-            };
-            actionDescriptor.SetProperty(flowDescriptor);
-
-            var actionContext = new ActionContext(httpContext, routeData, actionDescriptor);
-
-            var actionArguments = new Dictionary<string, object>()
-            {
-                {
-                    "instance",
-                    FormFlowInstance.Create(
-                        new InMemoryInstanceStateProvider(),
-                        key,
-                        FormFlowInstanceId.GenerateForRandomId(),
-                        stateType,
-                        new MyState(),
-                        new Dictionary<object, object>())
-                }
-            };
-
-            var context = new ActionExecutingContext(
-                actionContext,
-                new List<IFilterMetadata>(),
-                actionArguments,
-                controller: null);
-
-            var filter = new MissingInstanceActionFilter();
-
-            // Act
-            filter.OnActionExecuting(context);
-
-            // Assert
-            Assert.Null(context.Result);
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => HttpClient.SendAsync(request));
+            Assert.Equal("No FormFlow metadata found on action.", ex.Message);
         }
-
-        [Fact]
-        public void OnActionExecuting_InstanceArgumentIsNotBound_SetsResult()
-        {
-            // Arrange
-            var key = "key";
-            var stateType = typeof(MyState);
-
-            MissingInstanceHandler handler = (flowDescriptor, httpContext) => new CustomResult();
-
-            var options = new FormFlowOptions()
-            {
-                MissingInstanceHandler = handler
-            };
-
-            var services = new ServiceCollection()
-                .AddSingleton(Options.Create(options))
-                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
-                .BuildServiceProvider();
-
-            var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
-
-            var httpContext = new DefaultHttpContext();
-            httpContext.RequestServices = services;
-
-            var routeData = new RouteData();
-
-            var actionDescriptor = new ActionDescriptor()
-            {
-                Parameters = new List<ParameterDescriptor>()
-                {
-                    new ParameterDescriptor()
-                    {
-                        Name = "instance",
-                        ParameterType = typeof(FormFlowInstance)
-                    }
-                }
-            };
-            actionDescriptor.SetProperty(flowDescriptor);
-            actionDescriptor.SetProperty(RequiresInstanceMarker.Instance);
-
-            var actionContext = new ActionContext(httpContext, routeData, actionDescriptor);
-
-            var actionArguments = new Dictionary<string, object>();
-
-            var context = new ActionExecutingContext(
-                actionContext,
-                new List<IFilterMetadata>(),
-                actionArguments,
-                controller: null);
-
-            var filter = new MissingInstanceActionFilter();
-
-            // Act
-            filter.OnActionExecuting(context);
-
-            // Assert
-            Assert.IsType<CustomResult>(context.Result);
-        }
-
-        [Fact]
-        public void OnActionExecuting_ActionDecoratedWithRequiresFormFlowInstanceAttributeAndNoInstance_SetsResult()
-        {
-            // Arrange
-            var key = "key";
-            var stateType = typeof(MyState);
-
-            MissingInstanceHandler handler = (flowDescriptor, httpContext) => new CustomResult();
-
-            var options = new FormFlowOptions()
-            {
-                MissingInstanceHandler = handler
-            };
-
-            var services = new ServiceCollection()
-                .AddSingleton(Options.Create(options))
-                .AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>()
-                .BuildServiceProvider();
-
-            var flowDescriptor = new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId);
-
-            var httpContext = new DefaultHttpContext();
-            httpContext.RequestServices = services;
-
-            var routeData = new RouteData();
-
-            var actionDescriptor = new ActionDescriptor()
-            {
-                Parameters = new List<ParameterDescriptor>()
-            };
-            actionDescriptor.SetProperty(flowDescriptor);
-            actionDescriptor.SetProperty(RequiresInstanceMarker.Instance);
-
-            var actionContext = new ActionContext(httpContext, routeData, actionDescriptor);
-
-            var actionArguments = new Dictionary<string, object>();
-
-            var context = new ActionExecutingContext(
-                actionContext,
-                new List<IFilterMetadata>(),
-                actionArguments,
-                controller: null);
-
-            var filter = new MissingInstanceActionFilter();
-
-            // Act
-            filter.OnActionExecuting(context);
-
-            // Assert
-            Assert.IsType<CustomResult>(context.Result);
-        }
-
-        private class CustomResult : IActionResult
-        {
-            public Task ExecuteResultAsync(ActionContext context)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        private class MyState { }
     }
+
+    [Route("MissingInstanceActionFilterTests/{id}")]
+    public class MissingInstanceActionFilterTestsController : Controller
+    {
+        [FormFlowAction(
+            key: "MissingInstanceActionFilterTests",
+            stateType: typeof(MissingInstanceActionFilterTestsState),
+            idRouteParameterNames: "id")]
+        [RequireFormFlowInstance]
+        [HttpGet("withattribute")]
+        public IActionResult WithAttribute() => Ok();
+
+        [RequireFormFlowInstance]
+        [HttpGet("withoutmetadata")]
+        public IActionResult WithoutMetadata() => Ok();
+    }
+
+    public class MissingInstanceActionFilterTestsState { }
 }
