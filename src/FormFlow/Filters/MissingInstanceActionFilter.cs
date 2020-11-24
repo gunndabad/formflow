@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using System;
 using FormFlow.Metadata;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -15,34 +15,16 @@ namespace FormFlow.Filters
 
         public void OnActionExecuting(ActionExecutingContext context)
         {
-            var flowDescriptor = FormFlowDescriptor.FromActionContext(context);
-            if (flowDescriptor == null)
-            {
-                return;
-            }
-
             var options = context.HttpContext.RequestServices.GetRequiredService<IOptions<FormFlowOptions>>().Value;
-            if (options.MissingInstanceHandler == null)
-            {
-                return;
-            }
-
-            var instanceParameters = context.ActionDescriptor.Parameters
-                .Where(p => FormFlowInstance.IsFormFlowInstanceType(p.ParameterType))
-                .ToArray();
-
-            foreach (var p in instanceParameters)
-            {
-                if (!context.ActionArguments.TryGetValue(p.Name, out var instanceArgument) ||
-                    instanceArgument == null)
-                {
-                    context.Result = options.MissingInstanceHandler(flowDescriptor, context.HttpContext);
-                    return;
-                }
-            }
 
             if (context.ActionDescriptor.Properties.ContainsKey(typeof(RequiresInstanceMarker)))
             {
+                var flowDescriptor = FormFlowDescriptor.FromActionContext(context);
+                if (flowDescriptor == null)
+                {
+                    throw new InvalidOperationException("No FormFlow metadata found on action.");
+                }
+
                 var instanceResolver = new InstanceResolver(
                     context.HttpContext.RequestServices.GetRequiredService<IUserInstanceStateProvider>());
 
