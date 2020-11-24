@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 namespace FormFlow
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
-    public sealed class RequiresFormFlowInstanceAttribute : Attribute, IActionModelConvention, IControllerModelConvention
+    public sealed class RequireFormFlowInstanceAttribute : Attribute, IActionModelConvention, IControllerModelConvention
     {
         void IActionModelConvention.Apply(ActionModel action)
         {
