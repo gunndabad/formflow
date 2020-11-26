@@ -1,6 +1,5 @@
 ﻿using System;
 using FormFlow.Metadata;
-using FormFlow.State;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -25,10 +24,10 @@ namespace FormFlow.Filters
                     throw new InvalidOperationException("No FormFlow metadata found on action.");
                 }
 
-                var instanceResolver = new InstanceResolver(
-                    context.HttpContext.RequestServices.GetRequiredService<IUserInstanceStateProvider>());
+                var instanceProvider =
+                    context.HttpContext.RequestServices.GetRequiredService<FormFlowInstanceProvider>();
 
-                if (instanceResolver.Resolve(context) == null)
+                if (instanceProvider.GetInstance() == null)
                 {
                     context.Result = options.MissingInstanceHandler(flowDescriptor, context.HttpContext);
                     return;
