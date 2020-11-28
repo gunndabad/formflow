@@ -251,6 +251,12 @@ namespace FormFlow
                 return false;
             }
 
+            // Protect against stateProvider handing back a deleted instance
+            if (persistedInstance.Deleted)
+            {
+                return false;
+            }
+
             instance = persistedInstance;
             return true;
         }

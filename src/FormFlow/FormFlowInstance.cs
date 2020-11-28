@@ -12,7 +12,7 @@ namespace FormFlow
 
         private readonly IUserInstanceStateProvider _stateProvider;
 
-        private protected FormFlowInstance(
+        internal FormFlowInstance(
             IUserInstanceStateProvider stateProvider,
             string key,
             FormFlowInstanceId instanceId,
@@ -30,9 +30,9 @@ namespace FormFlow
             Completed = completed;
         }
 
-        public bool Completed { get; private set; }
+        public bool Completed { get; internal set; }
 
-        public bool Deleted { get; private set; }
+        public bool Deleted { get; internal set; }
 
         public string Key { get; }
 

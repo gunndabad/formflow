@@ -1152,6 +1152,59 @@ namespace FormFlow.Tests
             Assert.Equal(stateType, instance.StateType);
         }
 
+        [Fact]
+        public void TryResolveExistingInstance_InstanceIsDeleted_ReturnsFalse()
+        {
+            // Arrange
+            var key = "test-flow";
+            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var stateType = typeof(TestState);
+            var state = new TestState();
+
+            var stateProvider = new Mock<IUserInstanceStateProvider>();
+            stateProvider
+                .Setup(s => s.GetInstance(instanceId))
+                .Returns(() =>
+                {
+                    var instance = FormFlowInstance.Create(
+                        stateProvider.Object,
+                        key,
+                        instanceId,
+                        stateType,
+                        state,
+                        properties: new Dictionary<object, object>());
+                    instance.Deleted = true;
+                    return instance;
+                });
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
+
+            var routeData = new RouteData(new RouteValueDictionary()
+            {
+                { "ffiid", instanceId }
+            });
+
+            var actionDescriptor = new ActionDescriptor();
+            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+
+            CreateActionContext(
+                httpContext,
+                routeData,
+                actionDescriptor,
+                out _,
+                out var actionContextAccessor);
+
+            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+
+            // Act
+            var result = instanceProvider.TryResolveExistingInstance(out var instance);
+
+            // Assert
+            Assert.False(result);
+            Assert.Null(instance);
+        }
+
         private static void CreateActionContext(
             HttpContext httpContext,
             RouteData routeData,
