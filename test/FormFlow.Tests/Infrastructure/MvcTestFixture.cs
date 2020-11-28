@@ -23,7 +23,9 @@ namespace FormFlow.Tests.Infrastructure
                         .UseTestServer()
                         .ConfigureServices((ctx, services) =>
                         {
-                            services.AddMvc();
+                            services
+                                .AddMvc()
+                                .AddNewtonsoftJson();
 
                             services.AddFormFlow();
 
