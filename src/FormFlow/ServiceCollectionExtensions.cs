@@ -78,7 +78,14 @@ namespace FormFlow
                 services.AddTransient(instanceType, sp =>
                 {
                     var instanceProvider = sp.GetRequiredService<FormFlowInstanceProvider>();
-                    return instanceProvider.GetInstance();
+                    var instance = instanceProvider.GetInstance();
+
+                    if (instance == null)
+                    {
+                        throw new InvalidOperationException("No current FormFlow instance.");
+                    }
+
+                    return instance;
                 });
             }
 
