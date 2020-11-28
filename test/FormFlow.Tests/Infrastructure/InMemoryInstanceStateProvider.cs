@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using FormFlow.State;
 
-namespace FormFlow.Tests
+namespace FormFlow.Tests.Infrastructure
 {
     public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
     {
