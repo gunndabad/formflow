@@ -36,7 +36,7 @@ namespace FormFlow.Tests.Infrastructure
                 instanceId,
                 stateType,
                 state,
-                properties ?? new Dictionary<object, object>());
+                properties ?? PropertiesBuilder.CreateEmpty());
 
             return instance;
         }

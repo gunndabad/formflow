@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using FormFlow.State;
 
 namespace FormFlow
 {
     public class FormFlowInstance
     {
-        private static readonly IReadOnlyDictionary<object, object> _emptyProperties =
-            new ReadOnlyDictionary<object, object>(new Dictionary<object, object>());
-
         private readonly IUserInstanceStateProvider _stateProvider;
 
         internal FormFlowInstance(
@@ -25,7 +21,7 @@ namespace FormFlow
             Key = key ?? throw new ArgumentNullException(nameof(key));
             StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
             InstanceId = instanceId;
-            Properties = properties ?? _emptyProperties;
+            Properties = properties ?? PropertiesBuilder.CreateEmpty();
             State = state ?? throw new ArgumentNullException(nameof(state));
             Completed = completed;
         }

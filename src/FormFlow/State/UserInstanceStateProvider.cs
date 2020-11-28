@@ -38,7 +38,7 @@ namespace FormFlow.State
                 throw new ArgumentNullException(nameof(state));
             }
 
-            properties ??= new Dictionary<object, object>();
+            properties ??= PropertiesBuilder.CreateEmpty();
 
             var entry = new StoreEntry()
             {

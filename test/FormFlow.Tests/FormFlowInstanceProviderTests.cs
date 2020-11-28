@@ -126,7 +126,7 @@ namespace FormFlow.Tests
                         instanceId,
                         stateType,
                         state,
-                        properties: new Dictionary<object, object>()));
+                        properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
 
@@ -164,11 +164,10 @@ namespace FormFlow.Tests
             var stateType = typeof(TestState);
             object state = new TestState();
 
-            var properties = new Dictionary<object, object>()
-            {
-                { "foo", 1 },
-                { "bar", 2 }
-            };
+            var properties = new PropertiesBuilder()
+                .Add("foo", 1)
+                .Add("bar", 2)
+                .Build();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
@@ -321,11 +320,10 @@ namespace FormFlow.Tests
             var stateType = typeof(TestState);
             object state = new TestState();
 
-            var properties = new Dictionary<object, object>()
-            {
-                { "foo", 1 },
-                { "bar", 2 }
-            };
+            var properties = new PropertiesBuilder()
+                .Add("foo", 1)
+                .Add("bar", 2)
+                .Build();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
@@ -368,11 +366,10 @@ namespace FormFlow.Tests
             var stateType = typeof(TestState);
             object state = new TestState();
 
-            var properties = new Dictionary<object, object>()
-            {
-                { "foo", 1 },
-                { "bar", 2 }
-            };
+            var properties = new PropertiesBuilder()
+                .Add("foo", 1)
+                .Add("bar", 2)
+                .Build();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
@@ -431,11 +428,10 @@ namespace FormFlow.Tests
             var stateType = typeof(TestState);
             object state = new TestState();
 
-            var properties = new Dictionary<object, object>()
-            {
-                { "foo", 1 },
-                { "bar", 2 }
-            };
+            var properties = new PropertiesBuilder()
+                .Add("foo", 1)
+                .Add("bar", 2)
+                .Build();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
@@ -515,11 +511,10 @@ namespace FormFlow.Tests
             var stateType = typeof(TestState);
             object state = new TestState();
 
-            var properties = new Dictionary<object, object>()
-            {
-                { "foo", 1 },
-                { "bar", 2 }
-            };
+            var properties = new PropertiesBuilder()
+                .Add("foo", 1)
+                .Add("bar", 2)
+                .Build();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
@@ -629,11 +624,10 @@ namespace FormFlow.Tests
             var stateType = typeof(TestState);
             object originalState = new TestState();
 
-            var properties = new Dictionary<object, object>()
-            {
-                { "foo", 1 },
-                { "bar", 2 }
-            };
+            var properties = new PropertiesBuilder()
+                .Add("foo", 1)
+                .Add("bar", 2)
+                .Build();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
@@ -740,11 +734,10 @@ namespace FormFlow.Tests
             var stateType = typeof(TestState);
             object state = new TestState();
 
-            var properties = new Dictionary<object, object>()
-            {
-                { "foo", 1 },
-                { "bar", 2 }
-            };
+            var properties = new PropertiesBuilder()
+                .Add("foo", 1)
+                .Add("bar", 2)
+                .Build();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
@@ -835,7 +828,7 @@ namespace FormFlow.Tests
                         instanceId,
                         stateType,
                         state,
-                        properties: new Dictionary<object, object>()));
+                        properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
 
@@ -961,7 +954,7 @@ namespace FormFlow.Tests
                         instanceId,
                         stateType,
                         state,
-                        properties: new Dictionary<object, object>()));
+                        properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
@@ -1011,7 +1004,7 @@ namespace FormFlow.Tests
                         instanceId,
                         stateType,
                         state,
-                        properties: new Dictionary<object, object>()));
+                        properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
@@ -1060,7 +1053,7 @@ namespace FormFlow.Tests
                         instanceId,
                         stateType,
                         state,
-                        properties: new Dictionary<object, object>()));
+                        properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
@@ -1117,7 +1110,7 @@ namespace FormFlow.Tests
                         instanceId,
                         stateType,
                         state,
-                        properties: new Dictionary<object, object>()));
+                        properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Path = "/foo/42/69";
@@ -1172,7 +1165,7 @@ namespace FormFlow.Tests
                         instanceId,
                         stateType,
                         state,
-                        properties: new Dictionary<object, object>());
+                        properties: PropertiesBuilder.CreateEmpty());
                     instance.Deleted = true;
                     return instance;
                 });
