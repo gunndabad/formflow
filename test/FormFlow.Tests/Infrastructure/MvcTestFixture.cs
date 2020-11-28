@@ -51,7 +51,11 @@ namespace FormFlow.Tests.Infrastructure
 
         public HttpClient HttpClient { get; }
 
-        public void Dispose() => _host.Dispose();
+        public void Dispose()
+        {
+            HttpClient.Dispose();
+            _host.Dispose();
+        }
     }
 
     [CollectionDefinition("Mvc")]
