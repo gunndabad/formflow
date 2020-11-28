@@ -5,14 +5,14 @@ namespace FormFlow
 {
     public static class RedirectToActionResultExtensions
     {
-        public static RedirectToActionResult WithFormFlowInstanceId(
+        public static RedirectToActionResult WithFormFlowInstance(
             this RedirectToActionResult result,
             FormFlowInstance instance)
         {
-            return WithFormFlowInstanceId(result, instance.InstanceId);
+            return WithFormFlowInstance(result, instance.InstanceId);
         }
 
-        public static RedirectToActionResult WithFormFlowInstanceId(
+        public static RedirectToActionResult WithFormFlowInstance(
             this RedirectToActionResult result,
             FormFlowInstanceId instanceId)
         {
