@@ -37,7 +37,7 @@ namespace FormFlow.Tests
         public async Task RequireFormFlowInstanceSpecifiedWithActiveInstance_ReturnsOk()
         {
             // Arrange
-            CreateInstanceForRouteParameters(
+            CreateInstance(
                 key: "MissingInstanceActionFilterTests",
                 routeParameters: new Dictionary<string, object>()
                 {
@@ -66,19 +66,23 @@ namespace FormFlow.Tests
                 HttpMethod.Get,
                 $"MissingInstanceActionFilterTests/{id}/withoutmetadata");
 
-            // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => HttpClient.SendAsync(request));
-            Assert.Equal("No FormFlow metadata found on action.", ex.Message);
+            // Act
+            var ex = await Record.ExceptionAsync(() => HttpClient.SendAsync(request));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
+            Assert.Equal("No flow metadata found on action.", ex.Message);
         }
     }
 
     [Route("MissingInstanceActionFilterTests/{id}")]
     public class MissingInstanceActionFilterTestsController : Controller
     {
-        [FormFlowAction(
+        [FlowAction(
             key: "MissingInstanceActionFilterTests",
             stateType: typeof(MissingInstanceActionFilterTestsState),
-            idRouteParameterNames: "id")]
+            idRouteDataKeys: new[] { "id" },
+            useRandomExtension: false)]
         [RequireFormFlowInstance]
         [HttpGet("withattribute")]
         public IActionResult WithAttribute() => Ok();

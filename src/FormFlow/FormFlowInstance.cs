@@ -58,7 +58,7 @@ namespace FormFlow
                 instanceId,
                 state,
                 properties,
-                completed);
+                completed)!;
         }
 
         public void Complete()
@@ -135,13 +135,21 @@ namespace FormFlow
             TState state,
             IReadOnlyDictionary<object, object> properties,
             bool completed = false)
-            : base(stateProvider, key, instanceId, typeof(TState), state, properties, completed)
+            : base(stateProvider, key, instanceId, typeof(TState), state!, properties, completed)
         {
         }
 
         public new TState State => (TState)base.State;
 
-        public void UpdateState(TState state) => UpdateState((object)state);
+        public void UpdateState(TState state)
+        {
+            if (state == null)
+            {
+                throw new ArgumentNullException(nameof(state));
+            }
+
+            UpdateState((object)state);
+        }
 
         public void UpdateState(Action<TState> update)
         {

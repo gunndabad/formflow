@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using FormFlow.State;
+using Microsoft.AspNetCore.Routing;
 using Moq;
 using Xunit;
 
@@ -12,7 +13,7 @@ namespace FormFlow.Tests
         public void Delete_CallsDeleteOnStateProvider()
         {
             // Arrange
-            var instanceId = new FormFlowInstanceId("instance", new Microsoft.AspNetCore.Routing.RouteValueDictionary());
+            var instanceId = new FormFlowInstanceId("instance", new RouteValueDictionary());
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
@@ -61,7 +62,7 @@ namespace FormFlow.Tests
         public void UpdateState_CallsUpdateStateOnStateProvider()
         {
             // Arrange
-            var instanceId = new FormFlowInstanceId("instance", new Microsoft.AspNetCore.Routing.RouteValueDictionary());
+            var instanceId = new FormFlowInstanceId("instance", new RouteValueDictionary());
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
