@@ -2,6 +2,6 @@
 {
     internal static class Constants
     {
-        public static string InstanceIdQueryParameterName = "ffiid";
+        public static string RandomExtensionQueryParameterName = "ffiid";
     }
 }

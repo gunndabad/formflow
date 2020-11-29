@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Net.Http;
 using FormFlow.State;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -23,13 +24,21 @@ namespace FormFlow.Tests.Infrastructure
         protected InMemoryInstanceStateProvider StateProvider =>
             (InMemoryInstanceStateProvider)Fixture.Services.GetRequiredService<IUserInstanceStateProvider>();
 
-        protected FormFlowInstance<TState> CreateInstanceForRouteParameters<TState>(
+        protected FormFlowInstance<TState> CreateInstance<TState>(
             string key,
             IReadOnlyDictionary<string, object> routeParameters,
             TState state,
-            IReadOnlyDictionary<object, object> properties = null)
+            IReadOnlyDictionary<object, object> properties = null,
+            string randomExtension = null)
         {
-            var instanceId = FormFlowInstanceId.GenerateForRouteValues(key, routeParameters);
+            var routeValues = new RouteValueDictionary(routeParameters);
+
+            if (randomExtension != null)
+            {
+                routeValues.Add(Constants.RandomExtensionQueryParameterName, randomExtension);
+            }
+
+            var instanceId = new FormFlowInstanceId(key, routeValues);
 
             var instanceStateProvider = Fixture.Services.GetRequiredService<IUserInstanceStateProvider>();
 

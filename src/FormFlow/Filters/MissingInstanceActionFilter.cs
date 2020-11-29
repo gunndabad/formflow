@@ -1,5 +1,4 @@
 ﻿using System;
-using FormFlow.Metadata;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -18,10 +17,10 @@ namespace FormFlow.Filters
 
             if (context.ActionDescriptor.Properties.ContainsKey(typeof(RequiresInstanceMarker)))
             {
-                var flowDescriptor = FormFlowDescriptor.FromActionContext(context);
+                var flowDescriptor = FlowDescriptor.FromActionContext(context);
                 if (flowDescriptor == null)
                 {
-                    throw new InvalidOperationException("No FormFlow metadata found on action.");
+                    throw new InvalidOperationException("No flow metadata found on action.");
                 }
 
                 var instanceProvider =

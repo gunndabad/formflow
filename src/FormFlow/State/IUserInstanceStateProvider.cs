@@ -12,11 +12,11 @@ namespace FormFlow.State
             FormFlowInstanceId instanceId,
             Type stateType,
             object state,
-            IReadOnlyDictionary<object, object> properties);
+            IReadOnlyDictionary<object, object>? properties);
 
         void DeleteInstance(FormFlowInstanceId instanceId);
 
-        FormFlowInstance GetInstance(FormFlowInstanceId instanceId);
+        FormFlowInstance? GetInstance(FormFlowInstanceId instanceId);
 
         void UpdateInstanceState(FormFlowInstanceId instanceId, object state);
     }

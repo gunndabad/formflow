@@ -1,28 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
-using FormFlow.Metadata;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace FormFlow
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
-    public sealed class FormFlowActionAttribute : Attribute, IActionModelConvention, IControllerModelConvention
+    public sealed class FlowActionAttribute : Attribute, IActionModelConvention, IControllerModelConvention
     {
-        public FormFlowActionAttribute(string key, Type stateType, params string[] idRouteParameterNames)
+        public FlowActionAttribute(
+            string key,
+            Type stateType,
+            bool useRandomExtension,
+            params string[] idRouteDataKeys)
         {
             Key = key ?? throw new ArgumentNullException(nameof(key));
             StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
-            IdGenerationSource = idRouteParameterNames.Length == 0 ? IdGenerationSource.RandomId : IdGenerationSource.RouteValues;
-            IdRouteParameterNames = idRouteParameterNames;
+            IdRouteDataKeys = idRouteDataKeys;
+            UseRandomExtension = useRandomExtension;
         }
 
         public string Key { get; }
 
-        public IdGenerationSource IdGenerationSource { get; }
-
-        public IReadOnlyCollection<string> IdRouteParameterNames { get; }
+        public IReadOnlyCollection<string> IdRouteDataKeys { get; }
 
         public Type StateType { get; }
+
+        public bool UseRandomExtension { get; }
 
         void IActionModelConvention.Apply(ActionModel action)
         {
@@ -39,9 +42,8 @@ namespace FormFlow
 
         private void AddMetadataToAction(ActionModel action)
         {
-            var descriptor = new FormFlowDescriptor(Key, StateType, IdGenerationSource, IdRouteParameterNames);
-
-            action.Properties.Add(typeof(FormFlowDescriptor), descriptor);
+            var descriptor = new FlowDescriptor(Key, StateType, IdRouteDataKeys, UseRandomExtension);
+            action.Properties.Add(typeof(FlowDescriptor), descriptor);
         }
     }
 }

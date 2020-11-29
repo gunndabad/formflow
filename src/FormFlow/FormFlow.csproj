@@ -11,6 +11,7 @@
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <MinVerDefaultPreReleasePhase>pre</MinVerDefaultPreReleasePhase>
     <MinVerMinimumMajorMinor>0.4</MinVerMinimumMajorMinor>
+    <Nullable>Enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

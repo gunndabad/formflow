@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using FormFlow.Metadata;
 using FormFlow.State;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,8 +25,11 @@ namespace FormFlow.Tests
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => instanceProvider.CreateInstance((object)state));
+            // Act
+            var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal("No active ActionContext.", ex.Message);
         }
 
@@ -35,34 +37,32 @@ namespace FormFlow.Tests
         public void CreateInstance_ActionHasNoMetadata_ThrowsInvalidOperationException()
         {
             // Arrange
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var key = "test-flow";
+            CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
+            // Act
+            var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
+
             // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => instanceProvider.CreateInstance((object)state));
-            Assert.Equal("No FormFlow metadata found on action.", ex.Message);
+            Assert.IsType<InvalidOperationException>(ex);
+            Assert.Equal("No flow metadata found on action.", ex.Message);
         }
 
         [Fact]
@@ -70,7 +70,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
             var descriptorStateType = typeof(OtherTestState);
@@ -78,27 +78,25 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, descriptorStateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => instanceProvider.CreateInstance((object)state));
+            // Act
+            var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal($"{typeof(TestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(OtherTestState).FullName}).", ex.Message);
         }
 
@@ -112,7 +110,7 @@ namespace FormFlow.Tests
                 { "id", 42 },
                 { "subid", 69 }
             };
-            var instanceId = FormFlowInstanceId.GenerateForRouteValues(key, routeValues);
+            var instanceId = new FormFlowInstanceId(key, routeValues);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -129,29 +127,31 @@ namespace FormFlow.Tests
                         properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
+            httpContext.GetRouteData().Values.AddRange(routeValues);
 
             var routeData = new RouteData(routeValues);
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FormFlowDescriptor(
+                new FlowDescriptor(
                     key,
                     stateType,
-                    IdGenerationSource.RouteValues,
-                    idRouteParameterNames: new[] { "id", "subid" }));
+                    dependentRouteDataKeys: new[] { "id", "subid" },
+                    useRandomExtension: false));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(
-                () => instanceProvider.CreateInstance(state));
+            // Act
+            var ex = Record.Exception(() => instanceProvider.CreateInstance(state));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal("Instance already exists with this ID.", ex.Message);
         }
 
@@ -160,7 +160,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -189,19 +189,14 @@ namespace FormFlow.Tests
                 .Verifiable();
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -230,7 +225,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             TestState state = new TestState();
             var descriptorStateType = typeof(OtherTestState);
@@ -238,27 +233,25 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, descriptorStateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => instanceProvider.CreateInstance(state));
+            // Act
+            var ex = Record.Exception(() => instanceProvider.CreateInstance(state));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal($"{typeof(TestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(OtherTestState).FullName}).", ex.Message);
         }
 
@@ -272,8 +265,11 @@ namespace FormFlow.Tests
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => instanceProvider.GetInstance());
+            // Act
+            var ex = Record.Exception(() => instanceProvider.GetInstance());
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal("No active ActionContext.", ex.Message);
         }
 
@@ -281,34 +277,32 @@ namespace FormFlow.Tests
         public void GetInstance_ActionHasNoMetadata_ThrowsInvalidOperationException()
         {
             // Arrange
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var key = "test-flow";
+            CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => instanceProvider.GetInstance());
-            Assert.Equal("No FormFlow metadata found on action.", ex.Message);
+            // Act
+            var ex = Record.Exception(() => instanceProvider.GetInstance());
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
+            Assert.Equal("No flow metadata found on action.", ex.Message);
         }
 
         [Fact]
@@ -316,7 +310,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -331,19 +325,14 @@ namespace FormFlow.Tests
                 .Returns((FormFlowInstance)null);
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -362,7 +351,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -384,19 +373,14 @@ namespace FormFlow.Tests
                         properties));
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -424,7 +408,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -446,27 +430,25 @@ namespace FormFlow.Tests
                         properties));
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => instanceProvider.GetInstance<OtherTestState>());
+            // Act
+            var ex = Record.Exception(() => instanceProvider.GetInstance<OtherTestState>());
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(TestState).FullName}).", ex.Message);
         }
 
@@ -480,9 +462,11 @@ namespace FormFlow.Tests
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(
-                () => instanceProvider.GetOrCreateInstance(() => new TestState()));
+            // Act
+            var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new TestState()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal("No active ActionContext.", ex.Message);
         }
 
@@ -492,14 +476,24 @@ namespace FormFlow.Tests
             // Arrange
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
-            var actionContextAccessor = Mock.Of<IActionContextAccessor>();
+            var httpContext = new DefaultHttpContext();
+            var routeData = new RouteData();
+            var actionDescriptor = new ActionDescriptor();
+
+            CreateActionContext(
+                httpContext,
+                actionDescriptor,
+                out _,
+                out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(
-                () => instanceProvider.GetOrCreateInstance(() => new TestState()));
-            Assert.Equal("No active ActionContext.", ex.Message);
+            // Act
+            var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new TestState()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
+            Assert.Equal("No flow metadata found on action.", ex.Message);
         }
 
         [Fact]
@@ -507,7 +501,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -539,19 +533,14 @@ namespace FormFlow.Tests
                 .Verifiable();
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -580,7 +569,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -590,28 +579,25 @@ namespace FormFlow.Tests
                 .Returns((FormFlowInstance)null);
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(
-                () => instanceProvider.GetOrCreateInstance(() => (object)new OtherTestState()));
+            // Act
+            var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => (object)new OtherTestState()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(TestState).FullName}).", ex.Message);
         }
 
@@ -620,7 +606,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object originalState = new TestState();
 
@@ -642,19 +628,14 @@ namespace FormFlow.Tests
                         properties));
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -690,7 +671,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -700,28 +681,26 @@ namespace FormFlow.Tests
                 .Returns((FormFlowInstance)null);
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(
-                () => instanceProvider.GetOrCreateInstance<OtherTestState>(() => new OtherTestState()));
+            // Act
+            var ex = Record.Exception(
+                () => instanceProvider.GetOrCreateInstance(() => new OtherTestState()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(TestState).FullName}).", ex.Message);
         }
 
@@ -730,7 +709,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -752,28 +731,25 @@ namespace FormFlow.Tests
                         properties));
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
 
             var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(
-                () => instanceProvider.GetOrCreateInstance(() => new OtherTestState()));
+            // Act
+            var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new OtherTestState()));
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(ex);
             Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(TestState).FullName}).", ex.Message);
         }
 
@@ -784,12 +760,10 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
             var httpContext = new DefaultHttpContext();
-            var routeData = new RouteData();
             var actionDescriptor = new ActionDescriptor();
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -814,7 +788,7 @@ namespace FormFlow.Tests
                 { "id", 42 },
                 { "subid", 69 }
             };
-            var instanceId = FormFlowInstanceId.GenerateForRouteValues(key, routeValues);
+            var instanceId = new FormFlowInstanceId(key, routeValues);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -832,19 +806,16 @@ namespace FormFlow.Tests
 
             var httpContext = new DefaultHttpContext();
 
-            var routeData = new RouteData(new RouteValueDictionary());
-
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FormFlowDescriptor(
+                new FlowDescriptor(
                     key,
                     stateType,
-                    IdGenerationSource.RouteValues,
-                    idRouteParameterNames: new[] { "id", "subid" }));
+                    dependentRouteDataKeys: new[] { "id", "subid" },
+                    useRandomExtension: false));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -870,14 +841,12 @@ namespace FormFlow.Tests
 
             var httpContext = new DefaultHttpContext();
 
-            var routeData = new RouteData();
-
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -897,7 +866,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -907,19 +876,14 @@ namespace FormFlow.Tests
                 .Returns((FormFlowInstance)null);
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -939,7 +903,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
             var descriptorKey = "another-key";
@@ -957,19 +921,14 @@ namespace FormFlow.Tests
                         properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(descriptorKey, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(descriptorKey, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -989,7 +948,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
             var descriptorStateType = typeof(OtherTestState);
@@ -1007,19 +966,14 @@ namespace FormFlow.Tests
                         properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, descriptorStateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -1039,7 +993,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -1056,19 +1010,14 @@ namespace FormFlow.Tests
                         properties: PropertiesBuilder.CreateEmpty()));
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -1096,7 +1045,7 @@ namespace FormFlow.Tests
                 { "id", 42 },
                 { "subid", 69 }
             };
-            var instanceId = FormFlowInstanceId.GenerateForRouteValues(key, routeValues);
+            var instanceId = new FormFlowInstanceId(key, routeValues);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -1114,20 +1063,18 @@ namespace FormFlow.Tests
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Path = "/foo/42/69";
-
-            var routeData = new RouteData(routeValues);
+            httpContext.GetRouteData().Values.AddRange(routeValues);
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FormFlowDescriptor(
+                new FlowDescriptor(
                     key,
                     stateType,
-                    IdGenerationSource.RouteValues,
-                    idRouteParameterNames: new[] { "id", "subid" }));
+                    dependentRouteDataKeys: new[] { "id", "subid" },
+                    useRandomExtension: false));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -1150,7 +1097,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var key = "test-flow";
-            var instanceId = FormFlowInstanceId.GenerateForRandomId();
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -1171,19 +1118,14 @@ namespace FormFlow.Tests
                 });
 
             var httpContext = new DefaultHttpContext();
-            httpContext.Request.QueryString = new QueryString($"?ffiid={instanceId}");
-
-            var routeData = new RouteData(new RouteValueDictionary()
-            {
-                { "ffiid", instanceId }
-            });
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
-            actionDescriptor.SetProperty(new FormFlowDescriptor(key, stateType, IdGenerationSource.RandomId));
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
-                routeData,
                 actionDescriptor,
                 out _,
                 out var actionContextAccessor);
@@ -1200,17 +1142,30 @@ namespace FormFlow.Tests
 
         private static void CreateActionContext(
             HttpContext httpContext,
-            RouteData routeData,
             ActionDescriptor actionDescriptor,
             out ActionContext actionContext,
             out IActionContextAccessor actionContextAccessor)
         {
-            actionContext = new ActionContext(httpContext, routeData, actionDescriptor);
+            actionContext = new ActionContext(httpContext, httpContext.GetRouteData(), actionDescriptor);
 
             var actionContextAccessorMock = new Mock<IActionContextAccessor>();
             actionContextAccessorMock.SetupGet(mock => mock.ActionContext).Returns(actionContext);
 
             actionContextAccessor = actionContextAccessorMock.Object;
+        }
+
+        private static FormFlowInstanceId CreateIdWithRandomExtensionOnly(
+            string key,
+            out string randomExt)
+        {
+            randomExt = Guid.NewGuid().ToString();
+
+            return new FormFlowInstanceId(
+                key,
+                new RouteValueDictionary()
+                {
+                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                });
         }
 
         private class TestState { }
