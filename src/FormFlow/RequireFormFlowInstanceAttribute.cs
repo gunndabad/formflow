@@ -5,8 +5,30 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 namespace FormFlow
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
-    public sealed class RequireFormFlowInstanceAttribute : Attribute, IActionModelConvention, IControllerModelConvention
+    public sealed class RequireFormFlowInstanceAttribute :
+        Attribute,
+        IActionModelConvention,
+        IControllerModelConvention
     {
+        private int? _errorStatusCode;
+
+        public int ErrorStatusCode
+        {
+            get
+            {
+                return _errorStatusCode!.Value;  // yuk
+            }
+            set
+            {
+                if (value < 400 || value > 599)
+                {
+                    throw new ArgumentOutOfRangeException();
+                }
+
+                _errorStatusCode = value;
+            }
+        }
+
         void IActionModelConvention.Apply(ActionModel action)
         {
             AddMetadataToAction(action);
@@ -22,7 +44,9 @@ namespace FormFlow
 
         private void AddMetadataToAction(ActionModel action)
         {
-            action.Properties.Add(typeof(RequiresInstanceMarker), RequiresInstanceMarker.Instance);
+            action.Properties.Add(
+                typeof(RequireInstanceMarker),
+                new RequireInstanceMarker(_errorStatusCode));
         }
     }
 }

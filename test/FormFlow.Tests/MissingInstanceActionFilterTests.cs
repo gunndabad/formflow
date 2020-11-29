@@ -34,6 +34,22 @@ namespace FormFlow.Tests
         }
 
         [Fact]
+        public async Task RequireFormFlowInstanceSpecifiedWithOverridenStatusCodeButNoActiveInstance_ReturnsStatusCode()
+        {
+            // Arrange
+            var id = 42;
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"MissingInstanceActionFilterTests/{id}/withattributeandoverridenstatuscode");
+
+            // Act
+            var response = await HttpClient.SendAsync(request);
+
+            // Assert
+            Assert.Equal(400, (int)response.StatusCode);
+        }
+
+        [Fact]
         public async Task RequireFormFlowInstanceSpecifiedWithActiveInstance_ReturnsOk()
         {
             // Arrange
@@ -90,6 +106,15 @@ namespace FormFlow.Tests
         [RequireFormFlowInstance]
         [HttpGet("withoutmetadata")]
         public IActionResult WithoutMetadata() => Ok();
+
+        [FlowAction(
+            key: "MissingInstanceActionFilterTests",
+            stateType: typeof(MissingInstanceActionFilterTestsState),
+            idRouteDataKeys: new[] { "id" },
+            useRandomExtension: false)]
+        [RequireFormFlowInstance(ErrorStatusCode = 400)]
+        [HttpGet("withattributeandoverridenstatuscode")]
+        public IActionResult WithAttributeAndOverridenStatusCode() => Ok();
     }
 
     public class MissingInstanceActionFilterTestsState { }
