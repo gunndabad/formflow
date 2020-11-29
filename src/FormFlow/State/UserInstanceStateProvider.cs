@@ -80,7 +80,7 @@ namespace FormFlow.State
         {
             var storeKey = GetKeyForInstance(instanceId);
 
-            if (_store.TryGetState(storeKey, out var serialized))
+            if (_store.TryGetState(storeKey, out _))
             {
                 _store.DeleteState(storeKey);
             }
