@@ -211,6 +211,23 @@ namespace FormFlow
             return CreateInstance(newState, properties);
         }
 
+        public bool IsCurrentInstance(FormFlowInstance instance)
+        {
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+
+            return IsCurrentInstance(instance.InstanceId);
+        }
+
+        public bool IsCurrentInstance(FormFlowInstanceId instanceId)
+        {
+            TryResolveExistingInstance(out var currentInstance);
+
+            return currentInstance?.InstanceId == instanceId;
+        }
+
         internal bool TryResolveExistingInstance([MaybeNullWhen(false)] out FormFlowInstance instance)
         {
             instance = default;

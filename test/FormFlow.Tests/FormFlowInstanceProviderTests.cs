@@ -754,6 +754,135 @@ namespace FormFlow.Tests
         }
 
         [Fact]
+        public void IsCurrentInstance_InstanceMatches_ReturnsTrue()
+        {
+            // Arrange
+            var key = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var stateType = typeof(TestState);
+            var state = new TestState();
+
+            var stateProvider = new Mock<IUserInstanceStateProvider>();
+            stateProvider
+                .Setup(s => s.GetInstance(instanceId))
+                .Returns(
+                    FormFlowInstance.Create(
+                        stateProvider.Object,
+                        key,
+                        instanceId,
+                        stateType,
+                        state,
+                        properties: PropertiesBuilder.CreateEmpty()));
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
+
+            var actionDescriptor = new ActionDescriptor();
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+
+            CreateActionContext(
+                httpContext,
+                actionDescriptor,
+                out _,
+                out var actionContextAccessor);
+
+            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+
+            var otherInstanceId = new FormFlowInstanceId(
+                key,
+                new RouteValueDictionary()
+                {
+                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                });
+
+            // Act
+            var result = instanceProvider.IsCurrentInstance(otherInstanceId);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void IsCurrentInstance_NoCurrentInstance_ReturnsFalse()
+        {
+            // Arrange
+            var key = "test-flow";
+            CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var stateType = typeof(TestState);
+
+            var stateProvider = new Mock<IUserInstanceStateProvider>();
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
+
+            var actionDescriptor = new ActionDescriptor();
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+
+            CreateActionContext(
+                httpContext,
+                actionDescriptor,
+                out _,
+                out var actionContextAccessor);
+
+            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+
+            var otherInstanceId = new FormFlowInstanceId("another-id", new RouteValueDictionary());
+
+            // Act
+            var result = instanceProvider.IsCurrentInstance(otherInstanceId);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsCurrentInstance_DifferentInstanceToCurrent_ReturnsFalse()
+        {
+            // Arrange
+            var key = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var stateType = typeof(TestState);
+            var state = new TestState();
+
+            var stateProvider = new Mock<IUserInstanceStateProvider>();
+            stateProvider
+                .Setup(s => s.GetInstance(instanceId))
+                .Returns(
+                    FormFlowInstance.Create(
+                        stateProvider.Object,
+                        key,
+                        instanceId,
+                        stateType,
+                        state,
+                        properties: PropertiesBuilder.CreateEmpty()));
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
+
+            var actionDescriptor = new ActionDescriptor();
+            actionDescriptor.SetProperty(
+                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+
+            CreateActionContext(
+                httpContext,
+                actionDescriptor,
+                out _,
+                out var actionContextAccessor);
+
+            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+
+            var otherInstanceId = new FormFlowInstanceId("another-id", new RouteValueDictionary());
+
+            // Act
+            var result = instanceProvider.IsCurrentInstance(otherInstanceId);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
         public void TryResolveExistingInstance_ActionHasNoMetadata_ReturnsNull()
         {
             // Arrange
