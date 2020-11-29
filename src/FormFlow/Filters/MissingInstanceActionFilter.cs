@@ -1,4 +1,6 @@
 ﻿using System;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -15,7 +17,9 @@ namespace FormFlow.Filters
         {
             var options = context.HttpContext.RequestServices.GetRequiredService<IOptions<FormFlowOptions>>().Value;
 
-            if (context.ActionDescriptor.Properties.ContainsKey(typeof(RequiresInstanceMarker)))
+            var requireInstanceMarker = context.ActionDescriptor.GetProperty<RequireInstanceMarker>();
+
+            if (requireInstanceMarker != null)
             {
                 var flowDescriptor = FlowDescriptor.FromActionContext(context);
                 if (flowDescriptor == null)
@@ -28,17 +32,21 @@ namespace FormFlow.Filters
 
                 if (instanceProvider.GetInstance() == null)
                 {
-                    context.Result = options.MissingInstanceHandler(flowDescriptor, context.HttpContext);
-                    return;
+                    context.Result = requireInstanceMarker.ErrorStatusCode.HasValue ?
+                        new StatusCodeResult(requireInstanceMarker.ErrorStatusCode.Value) :
+                        options.MissingInstanceHandler(flowDescriptor, context.HttpContext);
                 }
             }
         }
     }
 
-    internal sealed class RequiresInstanceMarker
+    internal sealed class RequireInstanceMarker
     {
-        private RequiresInstanceMarker() { }
+        public RequireInstanceMarker(int? errorStatusCode)
+        {
+            ErrorStatusCode = errorStatusCode;
+        }
 
-        public static RequiresInstanceMarker Instance { get; } = new RequiresInstanceMarker();
+        public int? ErrorStatusCode { get; }
     }
 }
