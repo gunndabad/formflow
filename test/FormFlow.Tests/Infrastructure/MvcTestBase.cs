@@ -25,7 +25,7 @@ namespace FormFlow.Tests.Infrastructure
             (InMemoryInstanceStateProvider)Fixture.Services.GetRequiredService<IUserInstanceStateProvider>();
 
         protected JourneyInstance<TState> CreateInstance<TState>(
-            string key,
+            string journeyName,
             IReadOnlyDictionary<string, object> routeParameters,
             TState state,
             IReadOnlyDictionary<object, object> properties = null,
@@ -38,12 +38,12 @@ namespace FormFlow.Tests.Infrastructure
                 routeValues.Add(Constants.UniqueKeyQueryParameterName, uniqueKey);
             }
 
-            var instanceId = new JourneyInstanceId(key, routeValues);
+            var instanceId = new JourneyInstanceId(journeyName, routeValues);
 
             var instanceStateProvider = Fixture.Services.GetRequiredService<IUserInstanceStateProvider>();
 
             return (JourneyInstance<TState>)instanceStateProvider.CreateInstance(
-                key,
+                journeyName,
                 instanceId,
                 typeof(TState),
                 state,

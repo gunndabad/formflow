@@ -11,11 +11,11 @@ namespace FormFlow
             string journeyName,
             Type stateType,
             bool appendUniqueKey,
-            params string[] idRouteDataKeys)
+            params string[] requestDataKeys)
         {
             JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
             StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
-            IdRouteDataKeys = idRouteDataKeys;
+            RequestDataKeys = requestDataKeys;
             AppendUniqueKey = appendUniqueKey;
         }
 
@@ -23,7 +23,7 @@ namespace FormFlow
 
         public string JourneyName { get; }
 
-        public IReadOnlyCollection<string> IdRouteDataKeys { get; }
+        public IReadOnlyCollection<string> RequestDataKeys { get; }
 
         public Type StateType { get; }
 
@@ -42,7 +42,7 @@ namespace FormFlow
 
         private void AddMetadataToAction(ActionModel action)
         {
-            var descriptor = new JourneyDescriptor(JourneyName, StateType, IdRouteDataKeys, AppendUniqueKey);
+            var descriptor = new JourneyDescriptor(JourneyName, StateType, RequestDataKeys, AppendUniqueKey);
             action.Properties.Add(typeof(JourneyDescriptor), descriptor);
         }
     }
