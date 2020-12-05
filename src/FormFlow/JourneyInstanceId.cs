@@ -22,7 +22,7 @@ namespace FormFlow
 
         public string JourneyName { get; }
 
-        public string? RandomExtension => RouteValues[Constants.RandomExtensionQueryParameterName] as string;
+        public string? UniqueKey => RouteValues[Constants.UniqueKeyQueryParameterName] as string;
 
         public IReadOnlyDictionary<string, object> RouteValues { get; }
 
@@ -80,12 +80,12 @@ namespace FormFlow
                 instanceRouteValues.Add(routeParam, routeValue);
             }
 
-            if (journeyDescriptor.UseRandomExtension)
+            if (journeyDescriptor.AppendUniqueKey)
             {
                 var randExt = Guid.NewGuid().ToString();
 
                 // It's important that this overwrite any existing random extension
-                instanceRouteValues[Constants.RandomExtensionQueryParameterName] = randExt;
+                instanceRouteValues[Constants.UniqueKeyQueryParameterName] = randExt;
             }
 
             return new JourneyInstanceId(journeyDescriptor.JourneyName, instanceRouteValues);
@@ -116,16 +116,16 @@ namespace FormFlow
                 instanceRouteValues.Add(routeParam, routeValue);
             }
 
-            if (journeyDescriptor.UseRandomExtension)
+            if (journeyDescriptor.AppendUniqueKey)
             {
-                if (!routeValues.TryGetValue(Constants.RandomExtensionQueryParameterName, out var randomExt) ||
-                    randomExt == null)
+                if (!routeValues.TryGetValue(Constants.UniqueKeyQueryParameterName, out var uniqueKey) ||
+                    uniqueKey == null)
                 {
                     instanceId = default;
                     return false;
                 }
 
-                instanceRouteValues.Add(Constants.RandomExtensionQueryParameterName, randomExt);
+                instanceRouteValues.Add(Constants.UniqueKeyQueryParameterName, uniqueKey);
             }
 
             instanceId = new JourneyInstanceId(journeyDescriptor.JourneyName, instanceRouteValues);

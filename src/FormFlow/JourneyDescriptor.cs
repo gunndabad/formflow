@@ -12,21 +12,21 @@ namespace FormFlow
             string journeyName,
             Type stateType,
             IEnumerable<string> dependentRouteDataKeys,
-            bool useRandomExtension)
+            bool appendUniqueKey)
         {
             JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
             StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
             DependentRouteDataKeys = dependentRouteDataKeys?.ToArray() ?? Array.Empty<string>();
-            UseRandomExtension = useRandomExtension;
+            AppendUniqueKey = appendUniqueKey;
         }
+
+        public bool AppendUniqueKey { get; }
 
         public IReadOnlyCollection<string> DependentRouteDataKeys { get; }
 
         public string JourneyName { get; }
 
         public Type StateType { get; }
-
-        public bool UseRandomExtension { get; }
 
         public static JourneyDescriptor? FromActionContext(ActionContext actionContext)
         {

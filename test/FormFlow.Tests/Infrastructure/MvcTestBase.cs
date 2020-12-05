@@ -29,13 +29,13 @@ namespace FormFlow.Tests.Infrastructure
             IReadOnlyDictionary<string, object> routeParameters,
             TState state,
             IReadOnlyDictionary<object, object> properties = null,
-            string randomExtension = null)
+            string uniqueKey = null)
         {
             var routeValues = new RouteValueDictionary(routeParameters);
 
-            if (randomExtension != null)
+            if (uniqueKey != null)
             {
-                routeValues.Add(Constants.RandomExtensionQueryParameterName, randomExtension);
+                routeValues.Add(Constants.UniqueKeyQueryParameterName, uniqueKey);
             }
 
             var instanceId = new JourneyInstanceId(key, routeValues);
