@@ -21,20 +21,20 @@ namespace FormFlow.Filters
 
             if (requireInstanceMarker != null)
             {
-                var flowDescriptor = FlowDescriptor.FromActionContext(context);
-                if (flowDescriptor == null)
+                var journeyDescriptor = JourneyDescriptor.FromActionContext(context);
+                if (journeyDescriptor == null)
                 {
-                    throw new InvalidOperationException("No flow metadata found on action.");
+                    throw new InvalidOperationException("No journey metadata found on action.");
                 }
 
                 var instanceProvider =
-                    context.HttpContext.RequestServices.GetRequiredService<FormFlowInstanceProvider>();
+                    context.HttpContext.RequestServices.GetRequiredService<JourneyInstanceProvider>();
 
                 if (instanceProvider.GetInstance() == null)
                 {
                     context.Result = requireInstanceMarker.ErrorStatusCode.HasValue ?
                         new StatusCodeResult(requireInstanceMarker.ErrorStatusCode.Value) :
-                        options.MissingInstanceHandler(flowDescriptor, context.HttpContext);
+                        options.MissingInstanceHandler(journeyDescriptor, context.HttpContext);
                 }
             }
         }

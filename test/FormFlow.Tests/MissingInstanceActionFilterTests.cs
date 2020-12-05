@@ -18,7 +18,7 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public async Task RequireFormFlowInstanceSpecifiedButNoActiveInstance_ReturnsNotFound()
+        public async Task RequireJourneyInstanceSpecifiedButNoActiveInstance_ReturnsNotFound()
         {
             // Arrange
             var id = 42;
@@ -34,7 +34,7 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public async Task RequireFormFlowInstanceSpecifiedWithOverridenStatusCodeButNoActiveInstance_ReturnsStatusCode()
+        public async Task RequireJourneyInstanceSpecifiedWithOverridenStatusCodeButNoActiveInstance_ReturnsStatusCode()
         {
             // Arrange
             var id = 42;
@@ -50,7 +50,7 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public async Task RequireFormFlowInstanceSpecifiedWithActiveInstance_ReturnsOk()
+        public async Task RequireJourneyInstanceSpecifiedWithActiveInstance_ReturnsOk()
         {
             // Arrange
             CreateInstance(
@@ -74,7 +74,7 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public async Task RequireFormFlowInstanceSpecifiedButNoMetadata_Throws()
+        public async Task RequireJourneyInstanceSpecifiedButNoMetadata_Throws()
         {
             // Arrange
             var id = 42;
@@ -87,32 +87,32 @@ namespace FormFlow.Tests
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal("No flow metadata found on action.", ex.Message);
+            Assert.Equal("No journey metadata found on action.", ex.Message);
         }
     }
 
     [Route("MissingInstanceActionFilterTests/{id}")]
     public class MissingInstanceActionFilterTestsController : Controller
     {
-        [FlowAction(
-            key: "MissingInstanceActionFilterTests",
+        [JourneyMetadata(
+            journeyName: "MissingInstanceActionFilterTests",
             stateType: typeof(MissingInstanceActionFilterTestsState),
             idRouteDataKeys: new[] { "id" },
             useRandomExtension: false)]
-        [RequireFormFlowInstance]
+        [RequireJourneyInstance]
         [HttpGet("withattribute")]
         public IActionResult WithAttribute() => Ok();
 
-        [RequireFormFlowInstance]
+        [RequireJourneyInstance]
         [HttpGet("withoutmetadata")]
         public IActionResult WithoutMetadata() => Ok();
 
-        [FlowAction(
-            key: "MissingInstanceActionFilterTests",
+        [JourneyMetadata(
+            journeyName: "MissingInstanceActionFilterTests",
             stateType: typeof(MissingInstanceActionFilterTestsState),
             idRouteDataKeys: new[] { "id" },
             useRandomExtension: false)]
-        [RequireFormFlowInstance(ErrorStatusCode = 400)]
+        [RequireJourneyInstance(ErrorStatusCode = 400)]
         [HttpGet("withattributeandoverridenstatuscode")]
         public IActionResult WithAttributeAndOverridenStatusCode() => Ok();
     }

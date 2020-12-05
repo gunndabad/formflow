@@ -12,15 +12,15 @@ using Microsoft.AspNetCore.WebUtilities;
 namespace FormFlow
 {
     [DebuggerDisplay("{SerializableId}")]
-    public readonly struct FormFlowInstanceId : IEquatable<FormFlowInstanceId>
+    public readonly struct JourneyInstanceId : IEquatable<JourneyInstanceId>
     {
-        public FormFlowInstanceId(string key, RouteValueDictionary routeValues)
+        public JourneyInstanceId(string journeyName, RouteValueDictionary routeValues)
         {
-            Key = key ?? throw new ArgumentNullException(nameof(key));
+            JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
             RouteValues = routeValues ?? throw new ArgumentNullException(nameof(routeValues));
         }
 
-        public string Key { get; }
+        public string JourneyName { get; }
 
         public string? RandomExtension => RouteValues[Constants.RandomExtensionQueryParameterName] as string;
 
@@ -32,7 +32,7 @@ namespace FormFlow
             {
                 var urlEncoder = UrlEncoder.Default;
 
-                var url = urlEncoder.Encode(Key);
+                var url = urlEncoder.Encode(JourneyName);
 
                 foreach (var kvp in RouteValues)
                 {
@@ -58,18 +58,18 @@ namespace FormFlow
             }
         }
 
-        public static FormFlowInstanceId Create(FlowDescriptor flowDescriptor, HttpRequest httpRequest)
+        public static JourneyInstanceId Create(JourneyDescriptor journeyDescriptor, HttpRequest httpRequest)
         {
-            if (flowDescriptor == null)
+            if (journeyDescriptor == null)
             {
-                throw new ArgumentNullException(nameof(flowDescriptor));
+                throw new ArgumentNullException(nameof(journeyDescriptor));
             }
 
             var routeValues = GetNormalizedRouteValues(httpRequest);
 
             var instanceRouteValues = new RouteValueDictionary();
 
-            foreach (var routeParam in flowDescriptor.DependentRouteDataKeys)
+            foreach (var routeParam in journeyDescriptor.DependentRouteDataKeys)
             {
                 if (!routeValues.TryGetValue(routeParam, out var routeValue))
                 {
@@ -80,7 +80,7 @@ namespace FormFlow
                 instanceRouteValues.Add(routeParam, routeValue);
             }
 
-            if (flowDescriptor.UseRandomExtension)
+            if (journeyDescriptor.UseRandomExtension)
             {
                 var randExt = Guid.NewGuid().ToString();
 
@@ -88,24 +88,24 @@ namespace FormFlow
                 instanceRouteValues[Constants.RandomExtensionQueryParameterName] = randExt;
             }
 
-            return new FormFlowInstanceId(flowDescriptor.Key, instanceRouteValues);
+            return new JourneyInstanceId(journeyDescriptor.JourneyName, instanceRouteValues);
         }
 
         public static bool TryResolve(
-            FlowDescriptor flowDescriptor,
+            JourneyDescriptor journeyDescriptor,
             HttpRequest httpRequest,
-            out FormFlowInstanceId instanceId)
+            out JourneyInstanceId instanceId)
         {
-            if (flowDescriptor == null)
+            if (journeyDescriptor == null)
             {
-                throw new ArgumentNullException(nameof(flowDescriptor));
+                throw new ArgumentNullException(nameof(journeyDescriptor));
             }
 
             var routeValues = GetNormalizedRouteValues(httpRequest);
 
             var instanceRouteValues = new RouteValueDictionary();
 
-            foreach (var routeParam in flowDescriptor.DependentRouteDataKeys)
+            foreach (var routeParam in journeyDescriptor.DependentRouteDataKeys)
             {
                 if (!routeValues.TryGetValue(routeParam, out var routeValue))
                 {
@@ -116,7 +116,7 @@ namespace FormFlow
                 instanceRouteValues.Add(routeParam, routeValue);
             }
 
-            if (flowDescriptor.UseRandomExtension)
+            if (journeyDescriptor.UseRandomExtension)
             {
                 if (!routeValues.TryGetValue(Constants.RandomExtensionQueryParameterName, out var randomExt) ||
                     randomExt == null)
@@ -128,24 +128,24 @@ namespace FormFlow
                 instanceRouteValues.Add(Constants.RandomExtensionQueryParameterName, randomExt);
             }
 
-            instanceId = new FormFlowInstanceId(flowDescriptor.Key, instanceRouteValues);
+            instanceId = new JourneyInstanceId(journeyDescriptor.JourneyName, instanceRouteValues);
             return true;
         }
 
-        public bool Equals([AllowNull] FormFlowInstanceId other) =>
-            Key == other.Key && RouteValues.SequenceEqual(other.RouteValues);
+        public bool Equals([AllowNull] JourneyInstanceId other) =>
+            JourneyName == other.JourneyName && RouteValues.SequenceEqual(other.RouteValues);
 
-        public override bool Equals(object? obj) => obj is FormFlowInstanceId x && x.Equals(this);
+        public override bool Equals(object? obj) => obj is JourneyInstanceId x && x.Equals(this);
 
-        public override int GetHashCode() => HashCode.Combine(Key, RouteValues);
+        public override int GetHashCode() => HashCode.Combine(JourneyName, RouteValues);
 
         public override string ToString() => SerializableId;
 
-        public static bool operator ==(FormFlowInstanceId left, FormFlowInstanceId right) => left.Equals(right);
+        public static bool operator ==(JourneyInstanceId left, JourneyInstanceId right) => left.Equals(right);
 
-        public static bool operator !=(FormFlowInstanceId left, FormFlowInstanceId right) => !(left == right);
+        public static bool operator !=(JourneyInstanceId left, JourneyInstanceId right) => !(left == right);
 
-        public static implicit operator string(FormFlowInstanceId instanceId) => instanceId.ToString();
+        public static implicit operator string(JourneyInstanceId instanceId) => instanceId.ToString();
 
         private static RouteValueDictionary GetNormalizedRouteValues(HttpRequest request) =>
             new RouteValueDictionary(

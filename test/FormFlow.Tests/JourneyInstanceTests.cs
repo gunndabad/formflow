@@ -7,17 +7,17 @@ using Xunit;
 
 namespace FormFlow.Tests
 {
-    public class FormFlowInstanceTests
+    public class JourneyInstanceTests
     {
         [Fact]
         public void Delete_CallsDeleteOnStateProvider()
         {
             // Arrange
-            var instanceId = new FormFlowInstanceId("instance", new RouteValueDictionary());
+            var instanceId = new JourneyInstanceId("instance", new RouteValueDictionary());
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
-            var instance = (FormFlowInstance<MyState>)FormFlowInstance.Create(
+            var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
                 stateProvider.Object,
                 "key",
                 instanceId,
@@ -38,11 +38,11 @@ namespace FormFlow.Tests
         public void UpdateState_DeletedInstance_ThrowsInvalidOperationException()
         {
             // Arrange
-            var instanceId = new FormFlowInstanceId("instance", new Microsoft.AspNetCore.Routing.RouteValueDictionary());
+            var instanceId = new JourneyInstanceId("instance", new Microsoft.AspNetCore.Routing.RouteValueDictionary());
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
-            var instance = (FormFlowInstance<MyState>)FormFlowInstance.Create(
+            var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
                 stateProvider.Object,
                 "key",
                 instanceId,
@@ -62,11 +62,11 @@ namespace FormFlow.Tests
         public void UpdateState_CallsUpdateStateOnStateProvider()
         {
             // Arrange
-            var instanceId = new FormFlowInstanceId("instance", new RouteValueDictionary());
+            var instanceId = new JourneyInstanceId("instance", new RouteValueDictionary());
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
 
-            var instance = (FormFlowInstance<MyState>)FormFlowInstance.Create(
+            var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
                 stateProvider.Object,
                 "key",
                 instanceId,

@@ -5,19 +5,19 @@ namespace FormFlow.State
 {
     public interface IUserInstanceStateProvider
     {
-        void CompleteInstance(FormFlowInstanceId instanceId);
+        void CompleteInstance(JourneyInstanceId instanceId);
 
-        FormFlowInstance CreateInstance(
-            string key,
-            FormFlowInstanceId instanceId,
+        JourneyInstance CreateInstance(
+            string journeyName,
+            JourneyInstanceId instanceId,
             Type stateType,
             object state,
             IReadOnlyDictionary<object, object>? properties);
 
-        void DeleteInstance(FormFlowInstanceId instanceId);
+        void DeleteInstance(JourneyInstanceId instanceId);
 
-        FormFlowInstance? GetInstance(FormFlowInstanceId instanceId);
+        JourneyInstance? GetInstance(JourneyInstanceId instanceId);
 
-        void UpdateInstanceState(FormFlowInstanceId instanceId, object state);
+        void UpdateInstanceState(JourneyInstanceId instanceId, object state);
     }
 }

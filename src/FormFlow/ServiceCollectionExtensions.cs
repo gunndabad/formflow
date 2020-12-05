@@ -21,7 +21,7 @@ namespace FormFlow
 
             services.AddHttpContextAccessor();
             services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
-            services.AddSingleton<FormFlowInstanceProvider>();
+            services.AddSingleton<JourneyInstanceProvider>();
             services.TryAddSingleton<IStateSerializer, JsonStateSerializer>();
             services.TryAddSingleton<IUserInstanceStateProvider, UserInstanceStateProvider>();
             services.TryAddSingleton<IUserInstanceStateStore, SessionUserInstanceStateStore>();
@@ -54,7 +54,7 @@ namespace FormFlow
             return services;
         }
 
-        public static IServiceCollection AddFormFlowStateTypes(
+        public static IServiceCollection AddJourneyStateTypes(
             this IServiceCollection services,
             Assembly assembly)
         {
@@ -69,15 +69,15 @@ namespace FormFlow
             }
 
             var stateTypes = assembly.GetTypes()
-                .Where(t => t.IsPublic && !t.IsAbstract && t.GetCustomAttribute<FormFlowStateAttribute>() != null);
+                .Where(t => t.IsPublic && !t.IsAbstract && t.GetCustomAttribute<JourneyStateAttribute>() != null);
 
             foreach (var type in stateTypes)
             {
-                var instanceType = typeof(FormFlowInstance<>).MakeGenericType(type);
+                var instanceType = typeof(JourneyInstance<>).MakeGenericType(type);
 
                 services.AddTransient(instanceType, sp =>
                 {
-                    var instanceProvider = sp.GetRequiredService<FormFlowInstanceProvider>();
+                    var instanceProvider = sp.GetRequiredService<JourneyInstanceProvider>();
                     return instanceProvider.GetInstance();
                 });
             }
@@ -99,7 +99,7 @@ namespace FormFlow
                 throw new ArgumentNullException(nameof(fromAssemblyContainingType));
             }
 
-            return AddFormFlowStateTypes(services, fromAssemblyContainingType.Assembly);
+            return AddJourneyStateTypes(services, fromAssemblyContainingType.Assembly);
         }
     }
 }
