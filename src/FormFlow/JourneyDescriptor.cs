@@ -11,20 +11,20 @@ namespace FormFlow
         public JourneyDescriptor(
             string journeyName,
             Type stateType,
-            IEnumerable<string> dependentRouteDataKeys,
+            IEnumerable<string> requestDataKeys,
             bool appendUniqueKey)
         {
             JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
             StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
-            DependentRouteDataKeys = dependentRouteDataKeys?.ToArray() ?? Array.Empty<string>();
+            RequestDataKeys = requestDataKeys?.ToArray() ?? Array.Empty<string>();
             AppendUniqueKey = appendUniqueKey;
         }
 
         public bool AppendUniqueKey { get; }
 
-        public IReadOnlyCollection<string> DependentRouteDataKeys { get; }
-
         public string JourneyName { get; }
+
+        public IReadOnlyCollection<string> RequestDataKeys { get; }
 
         public Type StateType { get; }
 

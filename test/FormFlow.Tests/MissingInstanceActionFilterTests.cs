@@ -54,7 +54,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             CreateInstance(
-                key: "MissingInstanceActionFilterTests",
+                journeyName: "MissingInstanceActionFilterTests",
                 routeParameters: new Dictionary<string, object>()
                 {
                     { "id", "42" }
@@ -97,7 +97,7 @@ namespace FormFlow.Tests
         [JourneyMetadata(
             journeyName: "MissingInstanceActionFilterTests",
             stateType: typeof(MissingInstanceActionFilterTestsState),
-            idRouteDataKeys: new[] { "id" },
+            requestDataKeys: new[] { "id" },
             appendUniqueKey: false)]
         [RequireJourneyInstance]
         [HttpGet("withattribute")]
@@ -110,7 +110,7 @@ namespace FormFlow.Tests
         [JourneyMetadata(
             journeyName: "MissingInstanceActionFilterTests",
             stateType: typeof(MissingInstanceActionFilterTestsState),
-            idRouteDataKeys: new[] { "id" },
+            requestDataKeys: new[] { "id" },
             appendUniqueKey: false)]
         [RequireJourneyInstance(ErrorStatusCode = 400)]
         [HttpGet("withattributeandoverridenstatuscode")]

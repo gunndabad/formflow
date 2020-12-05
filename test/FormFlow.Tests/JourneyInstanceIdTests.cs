@@ -17,7 +17,7 @@ namespace FormFlow.Tests
             var journeyDescriptor = new JourneyDescriptor(
                 journeyName: "key",
                 stateType: typeof(State),
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 appendUniqueKey: true);
 
             var httpContext = new DefaultHttpContext();
@@ -35,7 +35,7 @@ namespace FormFlow.Tests
         public void Create_NoDependentRouteDataKeysWithoutUniqueKey_ReturnsCorrectInstance()
         {
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: Array.Empty<string>(),
+                requestDataKeys: Array.Empty<string>(),
                 useUniqueKey: false,
                 requestQuery: null,
                 addRouteData: routeData => { },
@@ -50,7 +50,7 @@ namespace FormFlow.Tests
             string randomExt = default;
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: Array.Empty<string>(),
+                requestDataKeys: Array.Empty<string>(),
                 useUniqueKey: true,
                 requestQuery: null,
                 addRouteData: routeData => { },
@@ -69,7 +69,7 @@ namespace FormFlow.Tests
             var id = Guid.NewGuid().ToString();
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: false,
                 requestQuery: null,
                 addRouteData: routeData =>
@@ -91,7 +91,7 @@ namespace FormFlow.Tests
             string randomExt = default;
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: true,
                 requestQuery: null,
                 addRouteData: routeData =>
@@ -113,7 +113,7 @@ namespace FormFlow.Tests
             var id = Guid.NewGuid().ToString();
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -135,7 +135,7 @@ namespace FormFlow.Tests
             string randomExt = default;
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -158,7 +158,7 @@ namespace FormFlow.Tests
             var id2 = Guid.NewGuid().ToString();
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -184,7 +184,7 @@ namespace FormFlow.Tests
             string randomExt = default;
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -210,7 +210,7 @@ namespace FormFlow.Tests
             var id2 = Guid.NewGuid().ToString();
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id1", "id2" },
+                requestDataKeys: new[] { "id1", "id2" },
                 useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -237,7 +237,7 @@ namespace FormFlow.Tests
             string randomExt = default;
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id1", "id2" },
+                requestDataKeys: new[] { "id1", "id2" },
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -264,7 +264,7 @@ namespace FormFlow.Tests
             string newRandomExt = default;
 
             CreateReturnsExpectedInstance(
-                dependentRouteDataKeys: Array.Empty<string>(),
+                requestDataKeys: Array.Empty<string>(),
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -282,7 +282,7 @@ namespace FormFlow.Tests
         }
 
         private void CreateReturnsExpectedInstance(
-            IEnumerable<string> dependentRouteDataKeys,
+            IEnumerable<string> requestDataKeys,
             bool useUniqueKey,
             IQueryCollection requestQuery,
             Action<RouteData> addRouteData,
@@ -294,7 +294,7 @@ namespace FormFlow.Tests
             var journeyDescriptor = new JourneyDescriptor(
                 journeyName: "key",
                 stateType: typeof(State),
-                dependentRouteDataKeys: dependentRouteDataKeys,
+                requestDataKeys: requestDataKeys,
                 appendUniqueKey: useUniqueKey);
 
             var id = Guid.NewGuid().ToString();
@@ -320,7 +320,7 @@ namespace FormFlow.Tests
             var journeyDescriptor = new JourneyDescriptor(
                 journeyName: "key",
                 stateType: typeof(State),
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 appendUniqueKey: false);
 
             var httpContext = new DefaultHttpContext();
@@ -339,7 +339,7 @@ namespace FormFlow.Tests
             var journeyDescriptor = new JourneyDescriptor(
                 journeyName: "key",
                 stateType: typeof(State),
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 appendUniqueKey: true);
 
             var httpContext = new DefaultHttpContext();
@@ -356,7 +356,7 @@ namespace FormFlow.Tests
         public void TryResolve_NoDependentRouteDataKeysWithoutUniqueKey_ReturnsCorrectInstance()
         {
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: Array.Empty<string>(),
+                requestDataKeys: Array.Empty<string>(),
                 useUniqueKey: false,
                 requestQuery: null,
                 addRouteData: routeData => { },
@@ -371,7 +371,7 @@ namespace FormFlow.Tests
             var randomExt = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: Array.Empty<string>(),
+                requestDataKeys: Array.Empty<string>(),
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -392,7 +392,7 @@ namespace FormFlow.Tests
             var id = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: false,
                 requestQuery: null,
                 addRouteData: routeData =>
@@ -414,7 +414,7 @@ namespace FormFlow.Tests
             var randomExt = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -438,7 +438,7 @@ namespace FormFlow.Tests
             var id = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -460,7 +460,7 @@ namespace FormFlow.Tests
             var randomExt = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -483,7 +483,7 @@ namespace FormFlow.Tests
             var id2 = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -509,7 +509,7 @@ namespace FormFlow.Tests
             var randomExt = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id" },
+                requestDataKeys: new[] { "id" },
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -535,7 +535,7 @@ namespace FormFlow.Tests
             var id2 = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id1", "id2" },
+                requestDataKeys: new[] { "id1", "id2" },
                 useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -562,7 +562,7 @@ namespace FormFlow.Tests
             var randomExt = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
-                dependentRouteDataKeys: new[] { "id1", "id2" },
+                requestDataKeys: new[] { "id1", "id2" },
                 useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
@@ -583,7 +583,7 @@ namespace FormFlow.Tests
         }
 
         private void TryResolveReturnsExpectedInstance(
-            IEnumerable<string> dependentRouteDataKeys,
+            IEnumerable<string> requestDataKeys,
             bool useUniqueKey,
             IQueryCollection requestQuery,
             Action<RouteData> addRouteData,
@@ -595,7 +595,7 @@ namespace FormFlow.Tests
             var journeyDescriptor = new JourneyDescriptor(
                 journeyName: "key",
                 stateType: typeof(State),
-                dependentRouteDataKeys: dependentRouteDataKeys,
+                requestDataKeys: requestDataKeys,
                 appendUniqueKey: useUniqueKey);
 
             var id = Guid.NewGuid().ToString();

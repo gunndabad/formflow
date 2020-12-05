@@ -69,7 +69,7 @@ namespace FormFlow
 
             var instanceRouteValues = new RouteValueDictionary();
 
-            foreach (var routeParam in journeyDescriptor.DependentRouteDataKeys)
+            foreach (var routeParam in journeyDescriptor.RequestDataKeys)
             {
                 if (!routeValues.TryGetValue(routeParam, out var routeValue))
                 {
@@ -105,7 +105,7 @@ namespace FormFlow
 
             var instanceRouteValues = new RouteValueDictionary();
 
-            foreach (var routeParam in journeyDescriptor.DependentRouteDataKeys)
+            foreach (var routeParam in journeyDescriptor.RequestDataKeys)
             {
                 if (!routeValues.TryGetValue(routeParam, out var routeValue))
                 {

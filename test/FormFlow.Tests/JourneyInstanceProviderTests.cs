@@ -136,7 +136,7 @@ namespace FormFlow.Tests
                 new JourneyDescriptor(
                     journeyName,
                     stateType,
-                    dependentRouteDataKeys: new[] { "id", "subid" },
+                    requestDataKeys: new[] { "id", "subid" },
                     appendUniqueKey: false));
 
             CreateActionContext(
@@ -940,7 +940,7 @@ namespace FormFlow.Tests
                 new JourneyDescriptor(
                     journeyName,
                     stateType,
-                    dependentRouteDataKeys: new[] { "id", "subid" },
+                    requestDataKeys: new[] { "id", "subid" },
                     appendUniqueKey: false));
 
             CreateActionContext(
@@ -1199,7 +1199,7 @@ namespace FormFlow.Tests
                 new JourneyDescriptor(
                     journeyName,
                     stateType,
-                    dependentRouteDataKeys: new[] { "id", "subid" },
+                    requestDataKeys: new[] { "id", "subid" },
                     appendUniqueKey: false));
 
             CreateActionContext(

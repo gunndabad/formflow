@@ -182,7 +182,7 @@ namespace FormFlow.Tests
     }
 
     [Route("RouteValuesE2ETests/{id}/{subid}")]
-    [JourneyMetadata(journeyName: "RouteValuesE2ETests", stateType: typeof(RouteValuesE2ETestsState), idRouteDataKeys: new[] { "id", "subid" }, appendUniqueKey: false)]
+    [JourneyMetadata(journeyName: "RouteValuesE2ETests", stateType: typeof(RouteValuesE2ETestsState), requestDataKeys: new[] { "id", "subid" }, appendUniqueKey: false)]
     public class RouteValuesE2ETestsController : Controller
     {
         private readonly JourneyInstanceProvider _journeyInstanceProvider;
