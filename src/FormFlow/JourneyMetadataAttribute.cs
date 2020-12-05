@@ -10,22 +10,22 @@ namespace FormFlow
         public JourneyMetadataAttribute(
             string journeyName,
             Type stateType,
-            bool useRandomExtension,
+            bool appendUniqueKey,
             params string[] idRouteDataKeys)
         {
             JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
             StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
             IdRouteDataKeys = idRouteDataKeys;
-            UseRandomExtension = useRandomExtension;
+            AppendUniqueKey = appendUniqueKey;
         }
+
+        public bool AppendUniqueKey { get; }
 
         public string JourneyName { get; }
 
         public IReadOnlyCollection<string> IdRouteDataKeys { get; }
 
         public Type StateType { get; }
-
-        public bool UseRandomExtension { get; }
 
         void IActionModelConvention.Apply(ActionModel action)
         {
@@ -42,7 +42,7 @@ namespace FormFlow
 
         private void AddMetadataToAction(ActionModel action)
         {
-            var descriptor = new JourneyDescriptor(JourneyName, StateType, IdRouteDataKeys, UseRandomExtension);
+            var descriptor = new JourneyDescriptor(JourneyName, StateType, IdRouteDataKeys, AppendUniqueKey);
             action.Properties.Add(typeof(JourneyDescriptor), descriptor);
         }
     }

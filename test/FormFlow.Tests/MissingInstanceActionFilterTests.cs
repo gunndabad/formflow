@@ -98,7 +98,7 @@ namespace FormFlow.Tests
             journeyName: "MissingInstanceActionFilterTests",
             stateType: typeof(MissingInstanceActionFilterTestsState),
             idRouteDataKeys: new[] { "id" },
-            useRandomExtension: false)]
+            appendUniqueKey: false)]
         [RequireJourneyInstance]
         [HttpGet("withattribute")]
         public IActionResult WithAttribute() => Ok();
@@ -111,7 +111,7 @@ namespace FormFlow.Tests
             journeyName: "MissingInstanceActionFilterTests",
             stateType: typeof(MissingInstanceActionFilterTestsState),
             idRouteDataKeys: new[] { "id" },
-            useRandomExtension: false)]
+            appendUniqueKey: false)]
         [RequireJourneyInstance(ErrorStatusCode = 400)]
         [HttpGet("withattributeandoverridenstatuscode")]
         public IActionResult WithAttributeAndOverridenStatusCode() => Ok();

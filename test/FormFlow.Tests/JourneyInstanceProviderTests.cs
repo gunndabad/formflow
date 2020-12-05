@@ -82,7 +82,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -137,7 +137,7 @@ namespace FormFlow.Tests
                     journeyName,
                     stateType,
                     dependentRouteDataKeys: new[] { "id", "subid" },
-                    useRandomExtension: false));
+                    appendUniqueKey: false));
 
             CreateActionContext(
                 httpContext,
@@ -193,7 +193,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -237,7 +237,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -329,7 +329,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -377,7 +377,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -434,7 +434,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -537,7 +537,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -583,7 +583,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -632,7 +632,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -685,7 +685,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -735,7 +735,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -779,7 +779,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -793,7 +793,7 @@ namespace FormFlow.Tests
                 journeyName,
                 new RouteValueDictionary()
                 {
-                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                    { Constants.UniqueKeyQueryParameterName, randomExt }
                 });
 
             // Act
@@ -818,7 +818,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -863,7 +863,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -941,7 +941,7 @@ namespace FormFlow.Tests
                     journeyName,
                     stateType,
                     dependentRouteDataKeys: new[] { "id", "subid" },
-                    useRandomExtension: false));
+                    appendUniqueKey: false));
 
             CreateActionContext(
                 httpContext,
@@ -972,7 +972,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -1009,7 +1009,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -1054,7 +1054,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(descriptorJourneyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(descriptorJourneyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -1099,7 +1099,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -1143,7 +1143,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -1200,7 +1200,7 @@ namespace FormFlow.Tests
                     journeyName,
                     stateType,
                     dependentRouteDataKeys: new[] { "id", "subid" },
-                    useRandomExtension: false));
+                    appendUniqueKey: false));
 
             CreateActionContext(
                 httpContext,
@@ -1251,7 +1251,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
             CreateActionContext(
                 httpContext,
@@ -1293,7 +1293,7 @@ namespace FormFlow.Tests
                 journeyName,
                 new RouteValueDictionary()
                 {
-                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                    { Constants.UniqueKeyQueryParameterName, randomExt }
                 });
         }
 

@@ -18,7 +18,7 @@ namespace FormFlow.Tests
                 journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: true);
+                appendUniqueKey: true);
 
             var httpContext = new DefaultHttpContext();
 
@@ -32,11 +32,11 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void Create_NoDependentRouteDataKeysWithoutRandomExtension_ReturnsCorrectInstance()
+        public void Create_NoDependentRouteDataKeysWithoutUniqueKey_ReturnsCorrectInstance()
         {
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: Array.Empty<string>(),
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: null,
                 addRouteData: routeData => { },
                 expectedInstanceRouteValueCount: 0,
@@ -45,32 +45,32 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void Create_NoDependentRouteDataKeysWithRandomExtension_ReturnsCorrectInstance()
+        public void Create_NoDependentRouteDataKeysWithUniqueKey_ReturnsCorrectInstance()
         {
             string randomExt = default;
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: Array.Empty<string>(),
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: null,
                 addRouteData: routeData => { },
                 expectedInstanceRouteValueCount: 1,
                 assertions: instanceId =>
                 {
-                    randomExt = instanceId.RouteValues[Constants.RandomExtensionQueryParameterName] as string;
+                    randomExt = instanceId.RouteValues[Constants.UniqueKeyQueryParameterName] as string;
                     Assert.NotNull(randomExt);
                 },
                 expectedSerializedInstanceId: () => $"key?ffiid={randomExt}");
         }
 
         [Fact]
-        public void Create_DependentRouteDataKeyInRouteTemplateWithoutRandomExtension_ReturnsCorrectInstance()
+        public void Create_DependentRouteDataKeyInRouteTemplateWithoutUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: null,
                 addRouteData: routeData =>
                 {
@@ -85,14 +85,14 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void Create_DependentRouteDataKeyInRouteTemplateWithRandomExtension_ReturnsCorrectInstance()
+        public void Create_DependentRouteDataKeyInRouteTemplateWithUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
             string randomExt = default;
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: null,
                 addRouteData: routeData =>
                 {
@@ -101,20 +101,20 @@ namespace FormFlow.Tests
                 expectedInstanceRouteValueCount: 2,
                 assertions: instanceId =>
                 {
-                    randomExt = instanceId.RouteValues[Constants.RandomExtensionQueryParameterName] as string;
+                    randomExt = instanceId.RouteValues[Constants.UniqueKeyQueryParameterName] as string;
                     Assert.Equal(id, instanceId.RouteValues["id"]);
                 },
                 expectedSerializedInstanceId: () => $"key?id={id}&ffiid={randomExt}");
         }
 
         [Fact]
-        public void Create_DependentRouteDataKeyInQueryStringWithoutRandomExtension_ReturnsCorrectInstance()
+        public void Create_DependentRouteDataKeyInQueryStringWithoutUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id", id }
@@ -129,14 +129,14 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void Create_DependentRouteDataKeyInQueryStringWithRandomExtension_ReturnsCorrectInstance()
+        public void Create_DependentRouteDataKeyInQueryStringWithUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
             string randomExt = default;
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id", id }
@@ -145,21 +145,21 @@ namespace FormFlow.Tests
                 expectedInstanceRouteValueCount: 2,
                 assertions: instanceId =>
                 {
-                    randomExt = instanceId.RouteValues[Constants.RandomExtensionQueryParameterName] as string;
+                    randomExt = instanceId.RouteValues[Constants.UniqueKeyQueryParameterName] as string;
                     Assert.Equal(id, instanceId.RouteValues["id"]);
                 },
                 expectedSerializedInstanceId: () => $"key?id={id}&ffiid={randomExt}");
         }
 
         [Fact]
-        public void Create_DependentRouteDataKeyInQueryStringWithMultipleValuesWithoutRandomExtension_ReturnsCorrectInstance()
+        public void Create_DependentRouteDataKeyInQueryStringWithMultipleValuesWithoutUniqueKey_ReturnsCorrectInstance()
         {
             var id1 = Guid.NewGuid().ToString();
             var id2 = Guid.NewGuid().ToString();
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id", new[] { id1, id2 } }
@@ -177,7 +177,7 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void Create_DependentRouteDataKeyInQueryStringWithMultipleValuesWithRandomExtension_ReturnsCorrectInstance()
+        public void Create_DependentRouteDataKeyInQueryStringWithMultipleValuesWithUniqueKey_ReturnsCorrectInstance()
         {
             var id1 = Guid.NewGuid().ToString();
             var id2 = Guid.NewGuid().ToString();
@@ -185,7 +185,7 @@ namespace FormFlow.Tests
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id", new[] { id1, id2 } }
@@ -194,7 +194,7 @@ namespace FormFlow.Tests
                 expectedInstanceRouteValueCount: 2,
                 assertions: instanceId =>
                 {
-                    randomExt = instanceId.RouteValues[Constants.RandomExtensionQueryParameterName] as string;
+                    randomExt = instanceId.RouteValues[Constants.UniqueKeyQueryParameterName] as string;
                     var ids = (Assert.IsAssignableFrom<IEnumerable<string>>(instanceId.RouteValues["id"])).ToList();
                     Assert.Equal(2, ids.Count);
                     Assert.Equal(id1, ids[0]);
@@ -204,14 +204,14 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void Create_DependentRouteDataKeysInRouteTemplateAndQueryStringWithoutRandomExtension_ReturnsCorrectInstance()
+        public void Create_DependentRouteDataKeysInRouteTemplateAndQueryStringWithoutUniqueKey_ReturnsCorrectInstance()
         {
             var id1 = Guid.NewGuid().ToString();
             var id2 = Guid.NewGuid().ToString();
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id1", "id2" },
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id2", id2 }
@@ -230,7 +230,7 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void Create_DependentRouteDataKeysInRouteTemplateAndQueryStringWithRandomExtension_ReturnsCorrectInstance()
+        public void Create_DependentRouteDataKeysInRouteTemplateAndQueryStringWithUniqueKey_ReturnsCorrectInstance()
         {
             var id1 = Guid.NewGuid().ToString();
             var id2 = Guid.NewGuid().ToString();
@@ -238,7 +238,7 @@ namespace FormFlow.Tests
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id1", "id2" },
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id2", id2 }
@@ -250,7 +250,7 @@ namespace FormFlow.Tests
                 expectedInstanceRouteValueCount: 3,
                 assertions: instanceId =>
                 {
-                    randomExt = instanceId.RouteValues[Constants.RandomExtensionQueryParameterName] as string;
+                    randomExt = instanceId.RouteValues[Constants.UniqueKeyQueryParameterName] as string;
                     Assert.Equal(id1, instanceId.RouteValues["id1"]);
                     Assert.Equal(id2, instanceId.RouteValues["id2"]);
                 },
@@ -258,23 +258,23 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void Create_RandomExtensionAlreadyInRouteData_ReturnsInstanceWithNewRandomExtension()
+        public void Create_UniqueKeyAlreadyInRouteData_ReturnsInstanceWithNewUniqueKey()
         {
             var currentRandomExt = Guid.NewGuid().ToString();
             string newRandomExt = default;
 
             CreateReturnsExpectedInstance(
                 dependentRouteDataKeys: Array.Empty<string>(),
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
-                    { Constants.RandomExtensionQueryParameterName, currentRandomExt }
+                    { Constants.UniqueKeyQueryParameterName, currentRandomExt }
                 }),
                 addRouteData: routeData => { },
                 expectedInstanceRouteValueCount: 1,
                 assertions: instanceId =>
                 {
-                    newRandomExt = instanceId.RouteValues[Constants.RandomExtensionQueryParameterName] as string;
+                    newRandomExt = instanceId.RouteValues[Constants.UniqueKeyQueryParameterName] as string;
                     Assert.NotNull(newRandomExt);
                     Assert.NotEqual(currentRandomExt, newRandomExt);
                 },
@@ -283,7 +283,7 @@ namespace FormFlow.Tests
 
         private void CreateReturnsExpectedInstance(
             IEnumerable<string> dependentRouteDataKeys,
-            bool useRandomExtension,
+            bool useUniqueKey,
             IQueryCollection requestQuery,
             Action<RouteData> addRouteData,
             int expectedInstanceRouteValueCount,
@@ -295,7 +295,7 @@ namespace FormFlow.Tests
                 journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: dependentRouteDataKeys,
-                useRandomExtension: useRandomExtension);
+                appendUniqueKey: useUniqueKey);
 
             var id = Guid.NewGuid().ToString();
 
@@ -321,7 +321,7 @@ namespace FormFlow.Tests
                 journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: false);
+                appendUniqueKey: false);
 
             var httpContext = new DefaultHttpContext();
 
@@ -333,14 +333,14 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_MissingRandomExtension_ReturnsFalse()
+        public void TryResolve_MissingUniqueKey_ReturnsFalse()
         {
             // Arrange
             var journeyDescriptor = new JourneyDescriptor(
                 journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: true);
+                appendUniqueKey: true);
 
             var httpContext = new DefaultHttpContext();
             httpContext.GetRouteData().Values.Add("id", Guid.NewGuid().ToString());
@@ -353,11 +353,11 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_NoDependentRouteDataKeysWithoutRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_NoDependentRouteDataKeysWithoutUniqueKey_ReturnsCorrectInstance()
         {
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: Array.Empty<string>(),
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: null,
                 addRouteData: routeData => { },
                 expectedInstanceRouteValueCount: 0,
@@ -366,16 +366,16 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_NoDependentRouteDataKeysWithRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_NoDependentRouteDataKeysWithUniqueKey_ReturnsCorrectInstance()
         {
             var randomExt = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: Array.Empty<string>(),
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
-                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                    { Constants.UniqueKeyQueryParameterName, randomExt }
                 }),
                 addRouteData: routeData => { },
                 expectedInstanceRouteValueCount: 1,
@@ -387,13 +387,13 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_DependentRouteDataKeyInRouteTemplateWithoutRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_DependentRouteDataKeyInRouteTemplateWithoutUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: null,
                 addRouteData: routeData =>
                 {
@@ -408,17 +408,17 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_DependentRouteDataKeyInRouteTemplateWithRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_DependentRouteDataKeyInRouteTemplateWithUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
             var randomExt = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
-                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                    { Constants.UniqueKeyQueryParameterName, randomExt }
                 }),
                 addRouteData: routeData =>
                 {
@@ -433,13 +433,13 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_DependentRouteDataKeyInQueryStringWithoutRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_DependentRouteDataKeyInQueryStringWithoutUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id", id }
@@ -454,18 +454,18 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_DependentRouteDataKeyInQueryStringWithRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_DependentRouteDataKeyInQueryStringWithUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
             var randomExt = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id", id },
-                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                    { Constants.UniqueKeyQueryParameterName, randomExt }
                 }),
                 addRouteData: routeData => { },
                 expectedInstanceRouteValueCount: 2,
@@ -477,14 +477,14 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_DependentRouteDataKeyInQueryStringWithMultipleValuesWithoutRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_DependentRouteDataKeyInQueryStringWithMultipleValuesWithoutUniqueKey_ReturnsCorrectInstance()
         {
             var id1 = Guid.NewGuid().ToString();
             var id2 = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id", new[] { id1, id2 } }
@@ -502,7 +502,7 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_DependentRouteDataKeyInQueryStringWithMultipleValuesWithRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_DependentRouteDataKeyInQueryStringWithMultipleValuesWithUniqueKey_ReturnsCorrectInstance()
         {
             var id1 = Guid.NewGuid().ToString();
             var id2 = Guid.NewGuid().ToString();
@@ -510,11 +510,11 @@ namespace FormFlow.Tests
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id" },
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id", new[] { id1, id2 } },
-                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                    { Constants.UniqueKeyQueryParameterName, randomExt }
                 }),
                 addRouteData: routeData => { },
                 expectedInstanceRouteValueCount: 2,
@@ -529,14 +529,14 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_DependentRouteDataKeysInRouteTemplateAndQueryStringWithoutRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_DependentRouteDataKeysInRouteTemplateAndQueryStringWithoutUniqueKey_ReturnsCorrectInstance()
         {
             var id1 = Guid.NewGuid().ToString();
             var id2 = Guid.NewGuid().ToString();
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id1", "id2" },
-                useRandomExtension: false,
+                useUniqueKey: false,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id2", id2 }
@@ -555,7 +555,7 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolve_DependentRouteDataKeysInRouteTemplateAndQueryStringWithRandomExtension_ReturnsCorrectInstance()
+        public void TryResolve_DependentRouteDataKeysInRouteTemplateAndQueryStringWithUniqueKey_ReturnsCorrectInstance()
         {
             var id1 = Guid.NewGuid().ToString();
             var id2 = Guid.NewGuid().ToString();
@@ -563,11 +563,11 @@ namespace FormFlow.Tests
 
             TryResolveReturnsExpectedInstance(
                 dependentRouteDataKeys: new[] { "id1", "id2" },
-                useRandomExtension: true,
+                useUniqueKey: true,
                 requestQuery: new QueryCollection(new Dictionary<string, StringValues>()
                 {
                     { "id2", id2 },
-                    { Constants.RandomExtensionQueryParameterName, randomExt }
+                    { Constants.UniqueKeyQueryParameterName, randomExt }
                 }),
                 addRouteData: routeData =>
                 {
@@ -584,7 +584,7 @@ namespace FormFlow.Tests
 
         private void TryResolveReturnsExpectedInstance(
             IEnumerable<string> dependentRouteDataKeys,
-            bool useRandomExtension,
+            bool useUniqueKey,
             IQueryCollection requestQuery,
             Action<RouteData> addRouteData,
             int expectedInstanceRouteValueCount,
@@ -596,7 +596,7 @@ namespace FormFlow.Tests
                 journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: dependentRouteDataKeys,
-                useRandomExtension: useRandomExtension);
+                appendUniqueKey: useUniqueKey);
 
             var id = Guid.NewGuid().ToString();
 
