@@ -11,7 +11,7 @@ using Xunit;
 
 namespace FormFlow.Tests
 {
-    public class FormFlowInstanceProviderTests
+    public class JourneyInstanceProviderTests
     {
         [Fact]
         public void CreateInstance_NoActionContext_ThrowsInvalidOperationException()
@@ -23,7 +23,7 @@ namespace FormFlow.Tests
 
             var actionContextAccessor = Mock.Of<IActionContextAccessor>();
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
@@ -37,8 +37,8 @@ namespace FormFlow.Tests
         public void CreateInstance_ActionHasNoMetadata_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
-            CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -55,22 +55,22 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
 
             // Act & Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal("No flow metadata found on action.", ex.Message);
+            Assert.Equal("No journey metadata found on action.", ex.Message);
         }
 
         [Fact]
         public void CreateInstance_StateTypeIsIncompatible_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
-            CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
             var descriptorStateType = typeof(OtherTestState);
@@ -82,7 +82,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -90,27 +90,27 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal($"{typeof(TestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(OtherTestState).FullName}).", ex.Message);
+            Assert.Equal($"{typeof(TestState).FullName} is not compatible with the journey's state type ({typeof(OtherTestState).FullName}).", ex.Message);
         }
 
         [Fact]
         public void CreateInstance_InstanceAlreadyExists_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
+            var journeyName = "test-flow";
             var routeValues = new RouteValueDictionary()
             {
                 { "id", 42 },
                 { "subid", 69 }
             };
-            var instanceId = new FormFlowInstanceId(key, routeValues);
+            var instanceId = new JourneyInstanceId(journeyName, routeValues);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -118,9 +118,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -133,8 +133,8 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(
-                    key,
+                new JourneyDescriptor(
+                    journeyName,
                     stateType,
                     dependentRouteDataKeys: new[] { "id", "subid" },
                     useRandomExtension: false));
@@ -145,7 +145,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.CreateInstance(state));
@@ -159,8 +159,8 @@ namespace FormFlow.Tests
         public void CreateInstance_CreatesInstanceInStateStore()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -172,16 +172,16 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.CreateInstance(
-                    key,
-                    It.IsAny<FormFlowInstanceId>(),  // FIXME
+                    journeyName,
+                    It.IsAny<JourneyInstanceId>(),  // FIXME
                     stateType,
                     state,
                     It.Is<IReadOnlyDictionary<object, object>>(d =>
                         d.Count == 2 && (int)d["foo"] == 1 && (int)d["bar"] == 2)))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -193,7 +193,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -201,7 +201,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.CreateInstance(state, properties);
@@ -209,7 +209,7 @@ namespace FormFlow.Tests
             // Assert
             stateProvider.Verify();
             Assert.NotNull(result);
-            Assert.Equal(key, result.Key);
+            Assert.Equal(journeyName, result.JourneyName);
             Assert.Equal(instanceId, result.InstanceId);
             Assert.Equal(stateType, result.StateType);
             Assert.Same(state, result.State);
@@ -224,8 +224,8 @@ namespace FormFlow.Tests
         public void CreateInstanceOfT_StateTypeIsIncompatible_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
-            CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             TestState state = new TestState();
             var descriptorStateType = typeof(OtherTestState);
@@ -237,7 +237,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -245,14 +245,14 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.CreateInstance(state));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal($"{typeof(TestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(OtherTestState).FullName}).", ex.Message);
+            Assert.Equal($"{typeof(TestState).FullName} is not compatible with the journey's state type ({typeof(OtherTestState).FullName}).", ex.Message);
         }
 
         [Fact]
@@ -263,7 +263,7 @@ namespace FormFlow.Tests
 
             var actionContextAccessor = Mock.Of<IActionContextAccessor>();
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.GetInstance());
@@ -277,8 +277,8 @@ namespace FormFlow.Tests
         public void GetInstance_ActionHasNoMetadata_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
-            CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -295,22 +295,22 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.GetInstance());
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal("No flow metadata found on action.", ex.Message);
+            Assert.Equal("No journey metadata found on action.", ex.Message);
         }
 
         [Fact]
         public void GetInstance_InstanceDoesNotExist_ReturnsNull()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -322,14 +322,14 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
-                .Returns((FormFlowInstance)null);
+                .Returns((JourneyInstance)null);
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -337,7 +337,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.GetInstance();
@@ -350,8 +350,8 @@ namespace FormFlow.Tests
         public void GetInstance_InstanceDoesExist_ReturnsInstance()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -364,9 +364,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -377,7 +377,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -385,14 +385,14 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.GetInstance();
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(key, result.Key);
+            Assert.Equal(journeyName, result.JourneyName);
             Assert.Equal(instanceId, result.InstanceId);
             Assert.Equal(stateType, result.StateType);
             Assert.Same(state, result.State);
@@ -407,8 +407,8 @@ namespace FormFlow.Tests
         public void GetInstanceOfT_StateTypeIsIncompatible_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -421,9 +421,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -434,7 +434,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -442,14 +442,14 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.GetInstance<OtherTestState>());
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(TestState).FullName}).", ex.Message);
+            Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the journey's state type ({typeof(TestState).FullName}).", ex.Message);
         }
 
         [Fact]
@@ -460,7 +460,7 @@ namespace FormFlow.Tests
 
             var actionContextAccessor = Mock.Of<IActionContextAccessor>();
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new TestState()));
@@ -486,22 +486,22 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new TestState()));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal("No flow metadata found on action.", ex.Message);
+            Assert.Equal("No journey metadata found on action.", ex.Message);
         }
 
         [Fact]
         public void GetOrCreateInstance_InstanceDoesNotExist_CreatesInstanceInStateStore()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -513,19 +513,19 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
-                .Returns((FormFlowInstance)null);
+                .Returns((JourneyInstance)null);
             stateProvider
                 .Setup(mock => mock.CreateInstance(
-                    key,
-                    It.IsAny<FormFlowInstanceId>(),  // FIXME
+                    journeyName,
+                    It.IsAny<JourneyInstanceId>(),  // FIXME
                     stateType,
                      It.IsAny<object>(),
                     It.Is<IReadOnlyDictionary<object, object>>(d =>
                         d.Count == 2 && (int)d["foo"] == 1 && (int)d["bar"] == 2)))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -537,7 +537,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -545,7 +545,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.GetOrCreateInstance(() => new TestState(), properties);
@@ -553,7 +553,7 @@ namespace FormFlow.Tests
             // Assert
             stateProvider.Verify();
             Assert.NotNull(result);
-            Assert.Equal(key, result.Key);
+            Assert.Equal(journeyName, result.JourneyName);
             Assert.Equal(instanceId, result.InstanceId);
             Assert.Equal(stateType, result.StateType);
             Assert.Same(state, result.State);
@@ -568,22 +568,22 @@ namespace FormFlow.Tests
         public void GetOrCreateInstance_CreateStateStateTypeIsIncompatible_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
-                .Returns((FormFlowInstance)null);
+                .Returns((JourneyInstance)null);
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -591,22 +591,22 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => (object)new OtherTestState()));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(TestState).FullName}).", ex.Message);
+            Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the journey's state type ({typeof(TestState).FullName}).", ex.Message);
         }
 
         [Fact]
         public void GetOrCreateInstance_InstanceDoesExist_ReturnsExistingInstance()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object originalState = new TestState();
 
@@ -619,9 +619,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         originalState,
@@ -632,7 +632,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -640,7 +640,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             var executedStateFactory = false;
 
@@ -655,7 +655,7 @@ namespace FormFlow.Tests
             // Assert
             Assert.False(executedStateFactory);
             Assert.NotNull(result);
-            Assert.Equal(key, result.Key);
+            Assert.Equal(journeyName, result.JourneyName);
             Assert.Equal(instanceId, result.InstanceId);
             Assert.Equal(stateType, result.StateType);
             Assert.Same(originalState, result.State);
@@ -670,22 +670,22 @@ namespace FormFlow.Tests
         public void GetOrCreateInstanceOfT_CreateStateStateTypeIsIncompatible_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
-                .Returns((FormFlowInstance)null);
+                .Returns((JourneyInstance)null);
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -693,7 +693,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(
@@ -701,15 +701,15 @@ namespace FormFlow.Tests
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(TestState).FullName}).", ex.Message);
+            Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the journey's state type ({typeof(TestState).FullName}).", ex.Message);
         }
 
         [Fact]
         public void GetOrCreateInstanceFfT_RequestedStateTypeIsIncompatible_ThrowsInvalidOperationException()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             object state = new TestState();
 
@@ -722,9 +722,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -735,7 +735,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -743,22 +743,22 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new OtherTestState()));
 
             // Assert
             Assert.IsType<InvalidOperationException>(ex);
-            Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the FormFlow metadata's state type ({typeof(TestState).FullName}).", ex.Message);
+            Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the journey's state type ({typeof(TestState).FullName}).", ex.Message);
         }
 
         [Fact]
         public void IsCurrentInstance_InstanceMatches_ReturnsTrue()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -766,9 +766,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -779,7 +779,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -787,10 +787,10 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            var otherInstanceId = new FormFlowInstanceId(
-                key,
+            var otherInstanceId = new JourneyInstanceId(
+                journeyName,
                 new RouteValueDictionary()
                 {
                     { Constants.RandomExtensionQueryParameterName, randomExt }
@@ -807,8 +807,8 @@ namespace FormFlow.Tests
         public void IsCurrentInstance_NoCurrentInstance_ReturnsFalse()
         {
             // Arrange
-            var key = "test-flow";
-            CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
@@ -818,7 +818,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -826,9 +826,9 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            var otherInstanceId = new FormFlowInstanceId("another-id", new RouteValueDictionary());
+            var otherInstanceId = new JourneyInstanceId("another-id", new RouteValueDictionary());
 
             // Act
             var result = instanceProvider.IsCurrentInstance(otherInstanceId);
@@ -841,8 +841,8 @@ namespace FormFlow.Tests
         public void IsCurrentInstance_DifferentInstanceToCurrent_ReturnsFalse()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -850,9 +850,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -863,7 +863,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -871,9 +871,9 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
-            var otherInstanceId = new FormFlowInstanceId("another-id", new RouteValueDictionary());
+            var otherInstanceId = new JourneyInstanceId("another-id", new RouteValueDictionary());
 
             // Act
             var result = instanceProvider.IsCurrentInstance(otherInstanceId);
@@ -897,7 +897,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -911,13 +911,13 @@ namespace FormFlow.Tests
         public void TryResolveExistingInstance_CannotExtractIdForRouteValues_ReturnsNull()
         {
             // Arrange
-            var key = "test-flow";
+            var journeyName = "test-flow";
             var routeValues = new RouteValueDictionary()
             {
                 { "id", 42 },
                 { "subid", 69 }
             };
-            var instanceId = new FormFlowInstanceId(key, routeValues);
+            var instanceId = new JourneyInstanceId(journeyName, routeValues);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -925,9 +925,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -937,8 +937,8 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(
-                    key,
+                new JourneyDescriptor(
+                    journeyName,
                     stateType,
                     dependentRouteDataKeys: new[] { "id", "subid" },
                     useRandomExtension: false));
@@ -949,7 +949,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -963,7 +963,7 @@ namespace FormFlow.Tests
         public void TryResolveExistingInstance_CannotExtractIdForRandomId_ReturnsNull()
         {
             // Arrange
-            var key = "test-flow";
+            var journeyName = "test-flow";
             var stateType = typeof(TestState);
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
@@ -972,7 +972,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -980,7 +980,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -994,22 +994,22 @@ namespace FormFlow.Tests
         public void TryResolveExistingInstance_InstanceDoesNotExistInStateStore_ReturnsNull()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
-                .Returns((FormFlowInstance)null);
+                .Returns((JourneyInstance)null);
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={randomExt}");
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -1017,7 +1017,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -1028,22 +1028,22 @@ namespace FormFlow.Tests
         }
 
         [Fact]
-        public void TryResolveExistingInstance_MismatchingKeys_ReturnsNull()
+        public void TryResolveExistingInstance_MismatchingJourneyNames_ReturnsNull()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
-            var descriptorKey = "another-key";
+            var descriptorJourneyName = "another-name";
 
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -1054,7 +1054,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(descriptorKey, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(descriptorJourneyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -1062,7 +1062,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -1076,8 +1076,8 @@ namespace FormFlow.Tests
         public void TryResolveExistingInstance_MismatchingStateType_ReturnsNull()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
             var descriptorStateType = typeof(OtherTestState);
@@ -1086,9 +1086,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -1099,7 +1099,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -1107,7 +1107,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -1121,8 +1121,8 @@ namespace FormFlow.Tests
         public void TryResolveExistingInstance_InstanceExistsForRandomId_ReturnsInstance()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -1130,9 +1130,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -1143,7 +1143,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -1151,7 +1151,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -1159,7 +1159,7 @@ namespace FormFlow.Tests
             // Assert
             Assert.True(result);
             Assert.NotNull(instance);
-            Assert.Equal(key, instance.Key);
+            Assert.Equal(journeyName, instance.JourneyName);
             Assert.Equal(instanceId, instance.InstanceId);
             Assert.Equal(stateType, instance.StateType);
         }
@@ -1168,13 +1168,13 @@ namespace FormFlow.Tests
         public void TryResolveExistingInstance_InstanceExistsForRouteValues_ReturnsInstance()
         {
             // Arrange
-            var key = "test-flow";
+            var journeyName = "test-flow";
             var routeValues = new RouteValueDictionary()
             {
                 { "id", 42 },
                 { "subid", 69 }
             };
-            var instanceId = new FormFlowInstanceId(key, routeValues);
+            var instanceId = new JourneyInstanceId(journeyName, routeValues);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -1182,9 +1182,9 @@ namespace FormFlow.Tests
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(
-                    FormFlowInstance.Create(
+                    JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -1196,8 +1196,8 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(
-                    key,
+                new JourneyDescriptor(
+                    journeyName,
                     stateType,
                     dependentRouteDataKeys: new[] { "id", "subid" },
                     useRandomExtension: false));
@@ -1208,7 +1208,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -1216,7 +1216,7 @@ namespace FormFlow.Tests
             // Assert
             Assert.True(result);
             Assert.NotNull(instance);
-            Assert.Equal(key, instance.Key);
+            Assert.Equal(journeyName, instance.JourneyName);
             Assert.Equal(instanceId, instance.InstanceId);
             Assert.Equal(stateType, instance.StateType);
         }
@@ -1225,8 +1225,8 @@ namespace FormFlow.Tests
         public void TryResolveExistingInstance_InstanceIsDeleted_ReturnsFalse()
         {
             // Arrange
-            var key = "test-flow";
-            var instanceId = CreateIdWithRandomExtensionOnly(key, out var randomExt);
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var randomExt);
             var stateType = typeof(TestState);
             var state = new TestState();
 
@@ -1235,9 +1235,9 @@ namespace FormFlow.Tests
                 .Setup(s => s.GetInstance(instanceId))
                 .Returns(() =>
                 {
-                    var instance = FormFlowInstance.Create(
+                    var instance = JourneyInstance.Create(
                         stateProvider.Object,
-                        key,
+                        journeyName,
                         instanceId,
                         stateType,
                         state,
@@ -1251,7 +1251,7 @@ namespace FormFlow.Tests
 
             var actionDescriptor = new ActionDescriptor();
             actionDescriptor.SetProperty(
-                new FlowDescriptor(key, stateType, Array.Empty<string>(), useRandomExtension: true));
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), useRandomExtension: true));
 
             CreateActionContext(
                 httpContext,
@@ -1259,7 +1259,7 @@ namespace FormFlow.Tests
                 out _,
                 out var actionContextAccessor);
 
-            var instanceProvider = new FormFlowInstanceProvider(stateProvider.Object, actionContextAccessor);
+            var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, actionContextAccessor);
 
             // Act
             var result = instanceProvider.TryResolveExistingInstance(out var instance);
@@ -1283,14 +1283,14 @@ namespace FormFlow.Tests
             actionContextAccessor = actionContextAccessorMock.Object;
         }
 
-        private static FormFlowInstanceId CreateIdWithRandomExtensionOnly(
-            string key,
+        private static JourneyInstanceId CreateIdWithRandomExtensionOnly(
+            string journeyName,
             out string randomExt)
         {
             randomExt = Guid.NewGuid().ToString();
 
-            return new FormFlowInstanceId(
-                key,
+            return new JourneyInstanceId(
+                journeyName,
                 new RouteValueDictionary()
                 {
                     { Constants.RandomExtensionQueryParameterName, randomExt }

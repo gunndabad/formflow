@@ -6,15 +6,15 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace FormFlow
 {
-    public class FlowDescriptor
+    public class JourneyDescriptor
     {
-        public FlowDescriptor(
-            string key,
+        public JourneyDescriptor(
+            string journeyName,
             Type stateType,
             IEnumerable<string> dependentRouteDataKeys,
             bool useRandomExtension)
         {
-            Key = key ?? throw new ArgumentNullException(nameof(key));
+            JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
             StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
             DependentRouteDataKeys = dependentRouteDataKeys?.ToArray() ?? Array.Empty<string>();
             UseRandomExtension = useRandomExtension;
@@ -22,20 +22,20 @@ namespace FormFlow
 
         public IReadOnlyCollection<string> DependentRouteDataKeys { get; }
 
-        public string Key { get; }
+        public string JourneyName { get; }
 
         public Type StateType { get; }
 
         public bool UseRandomExtension { get; }
 
-        public static FlowDescriptor? FromActionContext(ActionContext actionContext)
+        public static JourneyDescriptor? FromActionContext(ActionContext actionContext)
         {
             if (actionContext is null)
             {
                 throw new ArgumentNullException(nameof(actionContext));
             }
 
-            return actionContext.ActionDescriptor.GetProperty<FlowDescriptor>();
+            return actionContext.ActionDescriptor.GetProperty<JourneyDescriptor>();
         }
     }
 }

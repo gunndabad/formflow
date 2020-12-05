@@ -24,7 +24,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                key: "RouteValuesE2ETests",
+                journeyName: "RouteValuesE2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
                 stateType: typeof(RouteValuesE2ETestsState),
                 state: RouteValuesE2ETestsState.CreateInitialState(),
@@ -40,7 +40,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                key: "RouteValuesE2ETests",
+                journeyName: "RouteValuesE2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
                 stateType: typeof(RouteValuesE2ETestsState),
                 state: RouteValuesE2ETestsState.CreateInitialState(),
@@ -55,7 +55,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                key: "RouteValuesE2ETests",
+                journeyName: "RouteValuesE2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
                 stateType: typeof(RouteValuesE2ETestsState),
                 state: RouteValuesE2ETestsState.CreateInitialState(),
@@ -81,7 +81,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                key: "RouteValuesE2ETests",
+                journeyName: "RouteValuesE2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
                 stateType: typeof(RouteValuesE2ETestsState),
                 state: RouteValuesE2ETestsState.CreateInitialState(),
@@ -107,7 +107,7 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                key: "RouteValuesE2ETests",
+                journeyName: "RouteValuesE2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
                 stateType: typeof(RouteValuesE2ETestsState),
                 state: RouteValuesE2ETestsState.CreateInitialState(),
@@ -124,13 +124,13 @@ namespace FormFlow.Tests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
-        private static FormFlowInstanceId GenerateInstanceId(out string id, out string subid)
+        private static JourneyInstanceId GenerateInstanceId(out string id, out string subid)
         {
             id = Guid.NewGuid().ToString();
             subid = Guid.NewGuid().ToString();
 
-            return new FormFlowInstanceId(
-                key: "RouteValuesE2ETests",
+            return new JourneyInstanceId(
+                journeyName: "RouteValuesE2ETests",
                 new RouteValueDictionary(
                     new Dictionary<string, object>()
                     {
@@ -140,7 +140,7 @@ namespace FormFlow.Tests
         }
 
         private async Task<JObject> ReadStateAndAssert(
-            FormFlowInstanceId instanceId,
+            JourneyInstanceId instanceId,
             string expectedValue)
         {
             var id = instanceId.RouteValues["id"];
@@ -157,7 +157,7 @@ namespace FormFlow.Tests
             return responseObj;
         }
 
-        private async Task UpdateState(FormFlowInstanceId instanceId, string newValue)
+        private async Task UpdateState(JourneyInstanceId instanceId, string newValue)
         {
             var id = instanceId.RouteValues["id"];
             var subid = instanceId.RouteValues["subid"];
@@ -182,21 +182,21 @@ namespace FormFlow.Tests
     }
 
     [Route("RouteValuesE2ETests/{id}/{subid}")]
-    [FlowAction(key: "RouteValuesE2ETests", stateType: typeof(RouteValuesE2ETestsState), idRouteDataKeys: new[] { "id", "subid" }, useRandomExtension: false)]
+    [JourneyMetadata(journeyName: "RouteValuesE2ETests", stateType: typeof(RouteValuesE2ETestsState), idRouteDataKeys: new[] { "id", "subid" }, useRandomExtension: false)]
     public class RouteValuesE2ETestsController : Controller
     {
-        private readonly FormFlowInstanceProvider _formFlowInstanceProvider;
+        private readonly JourneyInstanceProvider _journeyInstanceProvider;
 
-        public RouteValuesE2ETestsController(FormFlowInstanceProvider formFlowInstanceProvider)
+        public RouteValuesE2ETestsController(JourneyInstanceProvider journeyInstanceProvider)
         {
-            _formFlowInstanceProvider = formFlowInstanceProvider;
+            _journeyInstanceProvider = journeyInstanceProvider;
         }
 
         [HttpGet("ReadState")]
-        [RequireFormFlowInstance]
+        [RequireJourneyInstance]
         public IActionResult ReadState()
         {
-            var instance = _formFlowInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
+            var instance = _journeyInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
 
             return Json(new
             {
@@ -206,35 +206,35 @@ namespace FormFlow.Tests
         }
 
         [HttpPost("UpdateState")]
-        [RequireFormFlowInstance]
+        [RequireJourneyInstance]
         public IActionResult UpdateState(string newValue)
         {
-            var instance = _formFlowInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
+            var instance = _journeyInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
             instance.UpdateState(state => state.Value = newValue);
-            return RedirectToAction(nameof(ReadState)).WithFormFlowInstance(instance);
+            return RedirectToAction(nameof(ReadState)).WithJourneyInstance(instance);
         }
 
         [HttpPost("Complete")]
-        [RequireFormFlowInstance]
+        [RequireJourneyInstance]
         public IActionResult Complete()
         {
-            var instance = _formFlowInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
+            var instance = _journeyInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
             instance.Complete();
             return Ok();
         }
 
         [HttpPost("Delete")]
-        [RequireFormFlowInstance]
+        [RequireJourneyInstance]
         public IActionResult Delete()
         {
-            var instance = _formFlowInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
+            var instance = _journeyInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
             instance.Delete();
             return Ok();
         }
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            _formFlowInstanceProvider.GetOrCreateInstance(
+            _journeyInstanceProvider.GetOrCreateInstance(
                 RouteValuesE2ETestsState.CreateInitialState,
                 properties: new PropertiesBuilder().Add("bar", 42).Build());
         }

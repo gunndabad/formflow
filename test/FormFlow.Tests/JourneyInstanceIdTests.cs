@@ -8,14 +8,14 @@ using Xunit;
 
 namespace FormFlow.Tests
 {
-    public class FormFlowInstanceIdTests
+    public class JourneyInstanceIdTests
     {
         [Fact]
         public void Create_MissingDependentRouteDataKey_ThrowsInvalidOperationException()
         {
             // Arrange
-            var flowDescriptor = new FlowDescriptor(
-                key: "key",
+            var journeyDescriptor = new JourneyDescriptor(
+                journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: new[] { "id" },
                 useRandomExtension: true);
@@ -23,7 +23,7 @@ namespace FormFlow.Tests
             var httpContext = new DefaultHttpContext();
 
             // Act
-            var ex = Record.Exception(() => FormFlowInstanceId.Create(flowDescriptor, httpContext.Request));
+            var ex = Record.Exception(() => JourneyInstanceId.Create(journeyDescriptor, httpContext.Request));
 
             // Assert
             Assert.NotNull(ex);
@@ -287,12 +287,12 @@ namespace FormFlow.Tests
             IQueryCollection requestQuery,
             Action<RouteData> addRouteData,
             int expectedInstanceRouteValueCount,
-            Action<FormFlowInstanceId> assertions,
+            Action<JourneyInstanceId> assertions,
             Func<string> expectedSerializedInstanceId)
         {
             // Arrange
-            var flowDescriptor = new FlowDescriptor(
-                key: "key",
+            var journeyDescriptor = new JourneyDescriptor(
+                journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: dependentRouteDataKeys,
                 useRandomExtension: useRandomExtension);
@@ -304,10 +304,10 @@ namespace FormFlow.Tests
             addRouteData?.Invoke(httpContext.GetRouteData());
 
             // Act
-            var instanceId = FormFlowInstanceId.Create(flowDescriptor, httpContext.Request);
+            var instanceId = JourneyInstanceId.Create(journeyDescriptor, httpContext.Request);
 
             // Assert
-            Assert.Equal("key", instanceId.Key);
+            Assert.Equal("key", instanceId.JourneyName);
             Assert.Equal(expectedInstanceRouteValueCount, instanceId.RouteValues.Count);
             assertions(instanceId);
             Assert.Equal(expectedSerializedInstanceId(), instanceId.ToString());
@@ -317,8 +317,8 @@ namespace FormFlow.Tests
         public void TryResolve_MissingDependentRouteDataKey_ReturnsFalse()
         {
             // Arrange
-            var flowDescriptor = new FlowDescriptor(
-                key: "key",
+            var journeyDescriptor = new JourneyDescriptor(
+                journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: new[] { "id" },
                 useRandomExtension: false);
@@ -326,7 +326,7 @@ namespace FormFlow.Tests
             var httpContext = new DefaultHttpContext();
 
             // Act
-            var result = FormFlowInstanceId.TryResolve(flowDescriptor, httpContext.Request, out _);
+            var result = JourneyInstanceId.TryResolve(journeyDescriptor, httpContext.Request, out _);
 
             // Assert
             Assert.False(result);
@@ -336,8 +336,8 @@ namespace FormFlow.Tests
         public void TryResolve_MissingRandomExtension_ReturnsFalse()
         {
             // Arrange
-            var flowDescriptor = new FlowDescriptor(
-                key: "key",
+            var journeyDescriptor = new JourneyDescriptor(
+                journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: new[] { "id" },
                 useRandomExtension: true);
@@ -346,7 +346,7 @@ namespace FormFlow.Tests
             httpContext.GetRouteData().Values.Add("id", Guid.NewGuid().ToString());
 
             // Act
-            var result = FormFlowInstanceId.TryResolve(flowDescriptor, httpContext.Request, out _);
+            var result = JourneyInstanceId.TryResolve(journeyDescriptor, httpContext.Request, out _);
 
             // Assert
             Assert.False(result);
@@ -588,12 +588,12 @@ namespace FormFlow.Tests
             IQueryCollection requestQuery,
             Action<RouteData> addRouteData,
             int expectedInstanceRouteValueCount,
-            Action<FormFlowInstanceId> assertions,
+            Action<JourneyInstanceId> assertions,
             Func<string> expectedSerializedInstanceId)
         {
             // Arrange
-            var flowDescriptor = new FlowDescriptor(
-                key: "key",
+            var journeyDescriptor = new JourneyDescriptor(
+                journeyName: "key",
                 stateType: typeof(State),
                 dependentRouteDataKeys: dependentRouteDataKeys,
                 useRandomExtension: useRandomExtension);
@@ -605,11 +605,11 @@ namespace FormFlow.Tests
             addRouteData?.Invoke(httpContext.GetRouteData());
 
             // Act
-            var result = FormFlowInstanceId.TryResolve(flowDescriptor, httpContext.Request, out var instanceId);
+            var result = JourneyInstanceId.TryResolve(journeyDescriptor, httpContext.Request, out var instanceId);
 
             // Assert
             Assert.True(result);
-            Assert.Equal("key", instanceId.Key);
+            Assert.Equal("key", instanceId.JourneyName);
             Assert.Equal(expectedInstanceRouteValueCount, instanceId.RouteValues.Count);
             assertions(instanceId);
             Assert.Equal(expectedSerializedInstanceId(), instanceId.ToString());

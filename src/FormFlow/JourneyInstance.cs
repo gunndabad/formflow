@@ -4,21 +4,21 @@ using FormFlow.State;
 
 namespace FormFlow
 {
-    public class FormFlowInstance
+    public class JourneyInstance
     {
         private readonly IUserInstanceStateProvider _stateProvider;
 
-        internal FormFlowInstance(
+        internal JourneyInstance(
             IUserInstanceStateProvider stateProvider,
-            string key,
-            FormFlowInstanceId instanceId,
+            string journeyName,
+            JourneyInstanceId instanceId,
             Type stateType,
             object state,
             IReadOnlyDictionary<object, object> properties,
             bool completed = false)
         {
             _stateProvider = stateProvider ?? throw new ArgumentNullException(nameof(stateProvider));
-            Key = key ?? throw new ArgumentNullException(nameof(key));
+            JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
             StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
             InstanceId = instanceId;
             Properties = properties ?? PropertiesBuilder.CreateEmpty();
@@ -30,9 +30,9 @@ namespace FormFlow
 
         public bool Deleted { get; internal set; }
 
-        public string Key { get; }
+        public string JourneyName { get; }
 
-        public FormFlowInstanceId InstanceId { get; }
+        public JourneyInstanceId InstanceId { get; }
 
         public IReadOnlyDictionary<object, object> Properties { get; }
 
@@ -40,21 +40,21 @@ namespace FormFlow
 
         public Type StateType { get; }
 
-        public static FormFlowInstance Create(
+        public static JourneyInstance Create(
             IUserInstanceStateProvider stateProvider,
-            string key,
-            FormFlowInstanceId instanceId,
+            string journeyName,
+            JourneyInstanceId instanceId,
             Type stateType,
             object state,
             IReadOnlyDictionary<object, object> properties,
             bool completed = false)
         {
-            var genericType = typeof(FormFlowInstance<>).MakeGenericType(stateType);
+            var genericType = typeof(JourneyInstance<>).MakeGenericType(stateType);
 
-            return (FormFlowInstance)Activator.CreateInstance(
+            return (JourneyInstance)Activator.CreateInstance(
                 genericType,
                 stateProvider,
-                key,
+                journeyName,
                 instanceId,
                 state,
                 properties,
@@ -88,15 +88,15 @@ namespace FormFlow
             Deleted = true;
         }
 
-        internal static bool IsFormFlowInstanceType(Type type)
+        internal static bool IsJourneyInstanceType(Type type)
         {
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
 
-            return type == typeof(FormFlowInstance) ||
-                (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(FormFlowInstance<>));
+            return type == typeof(JourneyInstance) ||
+                (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(JourneyInstance<>));
         }
 
         protected void UpdateState(object state)
@@ -126,16 +126,16 @@ namespace FormFlow
         }
     }
 
-    public sealed class FormFlowInstance<TState> : FormFlowInstance
+    public sealed class JourneyInstance<TState> : JourneyInstance
     {
-        public FormFlowInstance(
+        public JourneyInstance(
             IUserInstanceStateProvider stateProvider,
-            string key,
-            FormFlowInstanceId instanceId,
+            string journeyName,
+            JourneyInstanceId instanceId,
             TState state,
             IReadOnlyDictionary<object, object> properties,
             bool completed = false)
-            : base(stateProvider, key, instanceId, typeof(TState), state!, properties, completed)
+            : base(stateProvider, journeyName, instanceId, typeof(TState), state!, properties, completed)
         {
         }
 

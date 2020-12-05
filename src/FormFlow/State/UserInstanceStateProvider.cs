@@ -17,16 +17,16 @@ namespace FormFlow.State
             _store = store ?? throw new ArgumentNullException(nameof(store));
         }
 
-        public FormFlowInstance CreateInstance(
-            string key,
-            FormFlowInstanceId instanceId,
+        public JourneyInstance CreateInstance(
+            string journeyName,
+            JourneyInstanceId instanceId,
             Type stateType,
             object state,
             IReadOnlyDictionary<object, object> properties)
         {
-            if (key == null)
+            if (journeyName == null)
             {
-                throw new ArgumentNullException(nameof(key));
+                throw new ArgumentNullException(nameof(journeyName));
             }
 
             if (stateType == null)
@@ -43,7 +43,7 @@ namespace FormFlow.State
 
             var entry = new StoreEntry()
             {
-                Key = key,
+                JourneyName = journeyName,
                 StateTypeAssemblyQualifiedName = stateType.AssemblyQualifiedName,
                 State = state,
                 Properties = properties,
@@ -54,10 +54,10 @@ namespace FormFlow.State
             var storeKey = GetKeyForInstance(instanceId);
             _store.SetState(storeKey, serialized);
 
-            return FormFlowInstance.Create(this, key, instanceId, stateType, state, properties);
+            return JourneyInstance.Create(this, journeyName, instanceId, stateType, state, properties);
         }
 
-        public void CompleteInstance(FormFlowInstanceId instanceId)
+        public void CompleteInstance(JourneyInstanceId instanceId)
         {
             var storeKey = GetKeyForInstance(instanceId);
 
@@ -76,7 +76,7 @@ namespace FormFlow.State
             }
         }
 
-        public void DeleteInstance(FormFlowInstanceId instanceId)
+        public void DeleteInstance(JourneyInstanceId instanceId)
         {
             var storeKey = GetKeyForInstance(instanceId);
 
@@ -90,7 +90,7 @@ namespace FormFlow.State
             }
         }
 
-        public FormFlowInstance GetInstance(FormFlowInstanceId instanceId)
+        public JourneyInstance GetInstance(JourneyInstanceId instanceId)
         {
             var storeKey = GetKeyForInstance(instanceId);
             
@@ -100,9 +100,9 @@ namespace FormFlow.State
 
                 var stateType = Type.GetType(entry.StateTypeAssemblyQualifiedName);
 
-                return FormFlowInstance.Create(
+                return JourneyInstance.Create(
                     this,
-                    entry.Key,
+                    entry.JourneyName,
                     instanceId,
                     stateType,
                     entry.State,
@@ -115,7 +115,7 @@ namespace FormFlow.State
             }
         }
 
-        public void UpdateInstanceState(FormFlowInstanceId instanceId, object state)
+        public void UpdateInstanceState(JourneyInstanceId instanceId, object state)
         {
             var storeKey = GetKeyForInstance(instanceId);
 
@@ -140,7 +140,7 @@ namespace FormFlow.State
 
         private class StoreEntry
         {
-            public string Key { get; set; }
+            public string JourneyName { get; set; }
             public string StateTypeAssemblyQualifiedName { get; set; }
             public object State { get; set; }
             public IReadOnlyDictionary<object, object> Properties { get; set; }

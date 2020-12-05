@@ -5,16 +5,16 @@ namespace FormFlow
 {
     public static class RedirectToActionResultExtensions
     {
-        public static RedirectToActionResult WithFormFlowInstance(
+        public static RedirectToActionResult WithJourneyInstance(
             this RedirectToActionResult result,
-            FormFlowInstance instance)
+            JourneyInstance instance)
         {
-            return WithFormFlowInstance(result, instance.InstanceId);
+            return WithJourneyInstance(result, instance.InstanceId);
         }
 
-        public static RedirectToActionResult WithFormFlowInstance(
+        public static RedirectToActionResult WithJourneyInstance(
             this RedirectToActionResult result,
-            FormFlowInstanceId instanceId)
+            JourneyInstanceId instanceId)
         {
             result.RouteValues ??= new RouteValueDictionary();
 

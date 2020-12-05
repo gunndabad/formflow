@@ -15,24 +15,24 @@ namespace FormFlow.Tests.Infrastructure
 
         public void Clear() => _instances.Clear();
 
-        public FormFlowInstance CreateInstance(
-            string key,
-            FormFlowInstanceId instanceId,
+        public JourneyInstance CreateInstance(
+            string journeyName,
+            JourneyInstanceId instanceId,
             Type stateType,
             object state,
             IReadOnlyDictionary<object, object> properties)
         {
             _instances.Add(instanceId, new Entry()
             {
-                Key = key,
+                JourneyName = journeyName,
                 StateType = stateType,
                 State = state,
                 Properties = properties
             });
 
-            var instance = FormFlowInstance.Create(
+            var instance = JourneyInstance.Create(
                 this,
-                key,
+                journeyName,
                 instanceId,
                 stateType,
                 state,
@@ -41,35 +41,35 @@ namespace FormFlow.Tests.Infrastructure
             return instance;
         }
 
-        public void CompleteInstance(FormFlowInstanceId instanceId)
+        public void CompleteInstance(JourneyInstanceId instanceId)
         {
             _instances[instanceId].Completed = true;
         }
 
-        public void DeleteInstance(FormFlowInstanceId instanceId)
+        public void DeleteInstance(JourneyInstanceId instanceId)
         {
             _instances.Remove(instanceId);
         }
 
-        public FormFlowInstance GetInstance(FormFlowInstanceId instanceId)
+        public JourneyInstance GetInstance(JourneyInstanceId instanceId)
         {
             _instances.TryGetValue(instanceId, out var entry);
 
             var instance = entry != null ?
-                FormFlowInstance.Create(this, entry.Key, instanceId, entry.StateType, entry.State, entry.Properties, entry.Completed) :
+                JourneyInstance.Create(this, entry.JourneyName, instanceId, entry.StateType, entry.State, entry.Properties, entry.Completed) :
                 null;
 
             return instance;
         }
 
-        public void UpdateInstanceState(FormFlowInstanceId instanceId, object state)
+        public void UpdateInstanceState(JourneyInstanceId instanceId, object state)
         {
             _instances[instanceId].State = state;
         }
 
         private class Entry
         {
-            public string Key { get; set; }
+            public string JourneyName { get; set; }
             public IReadOnlyDictionary<object, object> Properties { get; set; }
             public object State { get; set; }
             public Type StateType { get; set; }

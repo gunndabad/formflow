@@ -5,6 +5,6 @@ namespace FormFlow
     public static class DefaultFormFlowOptions
     {
         public static MissingInstanceHandler MissingInstanceHandler { get; } =
-            (flowDescriptor, httpContext) => new NotFoundResult();
+            (journeyDescriptor, httpContext) => new NotFoundResult();
     }
 }

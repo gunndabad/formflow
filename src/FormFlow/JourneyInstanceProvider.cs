@@ -8,12 +8,12 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace FormFlow
 {
-    public class FormFlowInstanceProvider
+    public class JourneyInstanceProvider
     {
         private readonly IUserInstanceStateProvider _stateProvider;
         private readonly IActionContextAccessor _actionContextAccessor;
 
-        public FormFlowInstanceProvider(
+        public JourneyInstanceProvider(
             IUserInstanceStateProvider stateProvider,
             IActionContextAccessor actionContextAccessor)
         {
@@ -21,7 +21,7 @@ namespace FormFlow
             _actionContextAccessor = actionContextAccessor ?? throw new ArgumentNullException(nameof(actionContextAccessor));
         }
 
-        public FormFlowInstance CreateInstance(
+        public JourneyInstance CreateInstance(
             object state,
             IReadOnlyDictionary<object, object>? properties = null)
         {
@@ -31,12 +31,12 @@ namespace FormFlow
             }
 
             var actionContext = ResolveActionContext();
-            var flowDescriptor = ResolveFlowDescriptor(actionContext)!;
+            var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
-            ThrowIfStateTypeIncompatible(state.GetType(), flowDescriptor);
+            ThrowIfStateTypeIncompatible(state.GetType(), journeyDescriptor);
 
-            var instanceId = FormFlowInstanceId.Create(
-                flowDescriptor,
+            var instanceId = JourneyInstanceId.Create(
+                journeyDescriptor,
                 actionContext.HttpContext.Request);
 
             if (_stateProvider.GetInstance(instanceId) != null)
@@ -45,14 +45,14 @@ namespace FormFlow
             }
 
             return _stateProvider.CreateInstance(
-                flowDescriptor.Key,
+                journeyDescriptor.JourneyName,
                 instanceId,
-                flowDescriptor.StateType,
+                journeyDescriptor.StateType,
                 state,
                 properties);
         }
 
-        public FormFlowInstance<TState> CreateInstance<TState>(
+        public JourneyInstance<TState> CreateInstance<TState>(
             TState state,
             IReadOnlyDictionary<object, object>? properties = null)
         {
@@ -62,12 +62,12 @@ namespace FormFlow
             }
 
             var actionContext = ResolveActionContext();
-            var flowDescriptor = ResolveFlowDescriptor(actionContext)!;
+            var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
-            ThrowIfStateTypeIncompatible(typeof(TState), flowDescriptor);
+            ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
 
-            var instanceId = FormFlowInstanceId.Create(
-                flowDescriptor,
+            var instanceId = JourneyInstanceId.Create(
+                journeyDescriptor,
                 actionContext.HttpContext.Request);
 
             if (_stateProvider.GetInstance(instanceId) != null)
@@ -75,18 +75,18 @@ namespace FormFlow
                 throw new InvalidOperationException("Instance already exists with this ID.");
             }
 
-            return (FormFlowInstance<TState>)_stateProvider.CreateInstance(
-                flowDescriptor.Key,
+            return (JourneyInstance<TState>)_stateProvider.CreateInstance(
+                journeyDescriptor.JourneyName,
                 instanceId,
-                flowDescriptor.StateType,
+                journeyDescriptor.StateType,
                 state,
                 properties);
         }
 
-        public FormFlowInstance? GetInstance()
+        public JourneyInstance? GetInstance()
         {
-            // Throw if ActionContext or FlowDescriptor are missing
-            ResolveFlowDescriptor(ResolveActionContext());
+            // Throw if ActionContext or JourneyDescriptor are missing
+            ResolveJourneyDescriptor(ResolveActionContext());
 
             if (TryResolveExistingInstance(out var instance))
             {
@@ -98,16 +98,16 @@ namespace FormFlow
             }
         }
 
-        public FormFlowInstance<TState>? GetInstance<TState>()
+        public JourneyInstance<TState>? GetInstance<TState>()
         {
-            // Throw if ActionContext or FlowDescriptor are missing
-            ResolveFlowDescriptor(ResolveActionContext());
+            // Throw if ActionContext or JourneyDescriptor are missing
+            ResolveJourneyDescriptor(ResolveActionContext());
 
             if (TryResolveExistingInstance(out var instance))
             {
                 ThrowIfStateTypeIncompatible(typeof(TState), instance.StateType);
 
-                return (FormFlowInstance<TState>)instance;
+                return (JourneyInstance<TState>)instance;
             }
             else
             {
@@ -115,7 +115,7 @@ namespace FormFlow
             }
         }
 
-        public FormFlowInstance GetOrCreateInstance(
+        public JourneyInstance GetOrCreateInstance(
             Func<object> createState,
             IReadOnlyDictionary<object, object>? properties = null)
         {
@@ -125,7 +125,7 @@ namespace FormFlow
             }
 
             var actionContext = ResolveActionContext();
-            var flowDescriptor = ResolveFlowDescriptor(actionContext)!;
+            var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
             if (TryResolveExistingInstance(out var instance))
             {
@@ -134,12 +134,12 @@ namespace FormFlow
 
             var newState = createState();
 
-            ThrowIfStateTypeIncompatible(newState.GetType(), flowDescriptor);
+            ThrowIfStateTypeIncompatible(newState.GetType(), journeyDescriptor);
 
             return CreateInstance(newState, properties);
         }
 
-        public FormFlowInstance<TState> GetOrCreateInstance<TState>(
+        public JourneyInstance<TState> GetOrCreateInstance<TState>(
             Func<TState> createState,
             IReadOnlyDictionary<object, object>? properties = null)
         {
@@ -149,13 +149,13 @@ namespace FormFlow
             }
 
             var actionContext = ResolveActionContext();
-            var flowDescriptor = ResolveFlowDescriptor(actionContext)!;
+            var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
-            ThrowIfStateTypeIncompatible(typeof(TState), flowDescriptor);
+            ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
 
             if (TryResolveExistingInstance(out var instance))
             {
-                return (FormFlowInstance<TState>)instance;
+                return (JourneyInstance<TState>)instance;
             }
 
             var newState = createState();
@@ -163,7 +163,7 @@ namespace FormFlow
             return CreateInstance(newState, properties);
         }
 
-        public async Task<FormFlowInstance> GetOrCreateInstanceAsync(
+        public async Task<JourneyInstance> GetOrCreateInstanceAsync(
             Func<Task<object>> createState,
             IReadOnlyDictionary<object, object>? properties = null)
         {
@@ -173,7 +173,7 @@ namespace FormFlow
             }
 
             var actionContext = ResolveActionContext();
-            var flowDescriptor = ResolveFlowDescriptor(actionContext)!;
+            var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
             if (TryResolveExistingInstance(out var instance))
             {
@@ -182,12 +182,12 @@ namespace FormFlow
 
             var newState = await createState();
 
-            ThrowIfStateTypeIncompatible(newState.GetType(), flowDescriptor);
+            ThrowIfStateTypeIncompatible(newState.GetType(), journeyDescriptor);
 
             return CreateInstance(newState, properties);
         }
 
-        public async Task<FormFlowInstance<TState>> GetOrCreateInstanceAsync<TState>(
+        public async Task<JourneyInstance<TState>> GetOrCreateInstanceAsync<TState>(
             Func<Task<TState>> createState,
             IReadOnlyDictionary<object, object>? properties = null)
         {
@@ -197,13 +197,13 @@ namespace FormFlow
             }
 
             var actionContext = ResolveActionContext();
-            var flowDescriptor = ResolveFlowDescriptor(actionContext)!;
+            var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
-            ThrowIfStateTypeIncompatible(typeof(TState), flowDescriptor);
+            ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
 
             if (TryResolveExistingInstance(out var instance))
             {
-                return (FormFlowInstance<TState>)instance;
+                return (JourneyInstance<TState>)instance;
             }
 
             var newState = await createState();
@@ -211,7 +211,7 @@ namespace FormFlow
             return CreateInstance(newState, properties);
         }
 
-        public bool IsCurrentInstance(FormFlowInstance instance)
+        public bool IsCurrentInstance(JourneyInstance instance)
         {
             if (instance == null)
             {
@@ -221,28 +221,28 @@ namespace FormFlow
             return IsCurrentInstance(instance.InstanceId);
         }
 
-        public bool IsCurrentInstance(FormFlowInstanceId instanceId)
+        public bool IsCurrentInstance(JourneyInstanceId instanceId)
         {
             TryResolveExistingInstance(out var currentInstance);
 
             return currentInstance?.InstanceId == instanceId;
         }
 
-        internal bool TryResolveExistingInstance([MaybeNullWhen(false)] out FormFlowInstance instance)
+        internal bool TryResolveExistingInstance([MaybeNullWhen(false)] out JourneyInstance instance)
         {
             instance = default;
 
             var actionContext = ResolveActionContext();
 
-            var flowDescriptor = ResolveFlowDescriptor(actionContext, throwIfNotFound: false);
+            var journeyDescriptor = ResolveJourneyDescriptor(actionContext, throwIfNotFound: false);
 
-            if (flowDescriptor == null)
+            if (journeyDescriptor == null)
             {
                 return false;
             }
 
-            if (!FormFlowInstanceId.TryResolve(
-                flowDescriptor,
+            if (!JourneyInstanceId.TryResolve(
+                journeyDescriptor,
                 actionContext.HttpContext.Request,
                 out var instanceId))
             {
@@ -255,12 +255,12 @@ namespace FormFlow
                 return false;
             }
 
-            if (persistedInstance.Key != flowDescriptor.Key)
+            if (persistedInstance.JourneyName != journeyDescriptor.JourneyName)
             {
                 return false;
             }
 
-            if (persistedInstance.StateType != flowDescriptor.StateType)
+            if (persistedInstance.StateType != journeyDescriptor.StateType)
             {
                 return false;
             }
@@ -275,15 +275,15 @@ namespace FormFlow
             return true;
         }
 
-        private static void ThrowIfStateTypeIncompatible(Type stateType, FlowDescriptor flowDescriptor) =>
-            ThrowIfStateTypeIncompatible(stateType, flowDescriptor.StateType);
+        private static void ThrowIfStateTypeIncompatible(Type stateType, JourneyDescriptor journeyDescriptor) =>
+            ThrowIfStateTypeIncompatible(stateType, journeyDescriptor.StateType);
 
         private static void ThrowIfStateTypeIncompatible(Type stateType, Type instanceStateType)
         {
             if (stateType != instanceStateType)
             {
                 throw new InvalidOperationException(
-                    $"{stateType.FullName} is not compatible with the FormFlow metadata's state type ({instanceStateType.FullName}).");
+                    $"{stateType.FullName} is not compatible with the journey's state type ({instanceStateType.FullName}).");
             }
         }
 
@@ -299,15 +299,15 @@ namespace FormFlow
             return actionContext;
         }
 
-        private FlowDescriptor? ResolveFlowDescriptor(
+        private JourneyDescriptor? ResolveJourneyDescriptor(
             ActionContext actionContext,
             bool throwIfNotFound = true)
         {
-            var descriptor = FlowDescriptor.FromActionContext(actionContext);
+            var descriptor = JourneyDescriptor.FromActionContext(actionContext);
 
             if (descriptor == null && throwIfNotFound)
             {
-                throw new InvalidOperationException("No flow metadata found on action.");
+                throw new InvalidOperationException("No journey metadata found on action.");
             }
 
             return descriptor;
