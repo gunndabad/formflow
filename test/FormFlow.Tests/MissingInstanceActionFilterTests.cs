@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FormFlow.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Primitives;
 using Xunit;
 
 namespace FormFlow.Tests
@@ -55,7 +56,7 @@ namespace FormFlow.Tests
             // Arrange
             CreateInstance(
                 journeyName: "MissingInstanceActionFilterTests",
-                routeParameters: new Dictionary<string, object>()
+                keys: new Dictionary<string, StringValues>()
                 {
                     { "id", "42" }
                 },

@@ -18,7 +18,7 @@ namespace FormFlow
         {
             result.RouteValues ??= new RouteValueDictionary();
 
-            foreach (var kvp in instanceId.RouteValues)
+            foreach (var kvp in instanceId.Keys)
             {
                 result.RouteValues[kvp.Key] = kvp.Value;
             }

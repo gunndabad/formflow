@@ -3,6 +3,7 @@ using System.Net.Http;
 using FormFlow.State;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Primitives;
 using Xunit;
 
 namespace FormFlow.Tests.Infrastructure
@@ -26,19 +27,19 @@ namespace FormFlow.Tests.Infrastructure
 
         protected JourneyInstance<TState> CreateInstance<TState>(
             string journeyName,
-            IReadOnlyDictionary<string, object> routeParameters,
+            IReadOnlyDictionary<string, StringValues> keys,
             TState state,
             IReadOnlyDictionary<object, object> properties = null,
             string uniqueKey = null)
         {
-            var routeValues = new RouteValueDictionary(routeParameters);
+            var routeValues = new RouteValueDictionary(keys);
 
             if (uniqueKey != null)
             {
                 routeValues.Add(Constants.UniqueKeyQueryParameterName, uniqueKey);
             }
 
-            var instanceId = new JourneyInstanceId(journeyName, routeValues);
+            var instanceId = new JourneyInstanceId(journeyName, keys);
 
             var instanceStateProvider = Fixture.Services.GetRequiredService<IUserInstanceStateProvider>();
 
