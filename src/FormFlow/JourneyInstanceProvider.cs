@@ -5,19 +5,31 @@ using System.Threading.Tasks;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Options;
 
 namespace FormFlow
 {
     public class JourneyInstanceProvider
     {
         private readonly IUserInstanceStateProvider _stateProvider;
+        private readonly IList<IValueProviderFactory> _valueProviderFactories;
         private readonly IActionContextAccessor _actionContextAccessor;
 
         public JourneyInstanceProvider(
             IUserInstanceStateProvider stateProvider,
+            IOptions<FormFlowOptions> optionsAccessor,
             IActionContextAccessor actionContextAccessor)
         {
             _stateProvider = stateProvider ?? throw new ArgumentNullException(nameof(stateProvider));
+
+            if (optionsAccessor == null)
+            {
+                throw new ArgumentNullException(nameof(optionsAccessor));
+            }
+
+            _valueProviderFactories = optionsAccessor.Value.ValueProviderFactories;
+
             _actionContextAccessor = actionContextAccessor ?? throw new ArgumentNullException(nameof(actionContextAccessor));
         }
 
@@ -35,9 +47,11 @@ namespace FormFlow
 
             ThrowIfStateTypeIncompatible(state.GetType(), journeyDescriptor);
 
+            var valueProvider = CreateValueProvider(actionContext);
+
             var instanceId = JourneyInstanceId.Create(
                 journeyDescriptor,
-                actionContext.HttpContext.Request);
+                valueProvider);
 
             if (_stateProvider.GetInstance(instanceId) != null)
             {
@@ -66,9 +80,11 @@ namespace FormFlow
 
             ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
 
+            var valueProvider = CreateValueProvider(actionContext);
+
             var instanceId = JourneyInstanceId.Create(
                 journeyDescriptor,
-                actionContext.HttpContext.Request);
+                valueProvider);
 
             if (_stateProvider.GetInstance(instanceId) != null)
             {
@@ -241,9 +257,11 @@ namespace FormFlow
                 return false;
             }
 
+            var valueProvider = CreateValueProvider(actionContext);
+
             if (!JourneyInstanceId.TryResolve(
                 journeyDescriptor,
-                actionContext.HttpContext.Request,
+                valueProvider,
                 out var instanceId))
             {
                 return false;
@@ -287,6 +305,35 @@ namespace FormFlow
             }
         }
 
+        private IValueProvider CreateValueProvider(ActionContext actionContext)
+        {
+            if (actionContext.HttpContext.Items.TryGetValue(typeof(ValueProviderCacheEntry), out var cacheEntry))
+            {
+                return ((ValueProviderCacheEntry)cacheEntry).ValueProvider;
+            }
+
+            var valueProviders = new List<IValueProvider>();
+
+            foreach (var valueProviderFactory in _valueProviderFactories)
+            {
+                var ctx = new ValueProviderFactoryContext(actionContext);
+
+                // All the in-box implementations of IValueProviderFactory complete synchronously
+                // and making this method async forces the entire API to be sync.
+                valueProviderFactory.CreateValueProviderAsync(ctx).GetAwaiter().GetResult();
+
+                valueProviders.AddRange(ctx.ValueProviders);
+            }
+
+            var valueProvider = new CompositeValueProvider(valueProviders);
+
+            actionContext.HttpContext.Items.TryAdd(
+                typeof(ValueProviderCacheEntry),
+                new ValueProviderCacheEntry(valueProvider));
+
+            return valueProvider;
+        }
+
         private ActionContext ResolveActionContext()
         {
             var actionContext = _actionContextAccessor.ActionContext;
@@ -311,6 +358,16 @@ namespace FormFlow
             }
 
             return descriptor;
+        }
+
+        private class ValueProviderCacheEntry
+        {
+            public ValueProviderCacheEntry(IValueProvider valueProvider)
+            {
+                ValueProvider = valueProvider;
+            }
+
+            public IValueProvider ValueProvider { get; }
         }
     }
 }

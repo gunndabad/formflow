@@ -1,30 +1,29 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.Encodings.Web;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Primitives;
 
 namespace FormFlow
 {
     [DebuggerDisplay("{SerializableId}")]
     public readonly struct JourneyInstanceId : IEquatable<JourneyInstanceId>
     {
-        public JourneyInstanceId(string journeyName, RouteValueDictionary routeValues)
+        public JourneyInstanceId(string journeyName, IReadOnlyDictionary<string, StringValues> keys)
         {
             JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
-            RouteValues = routeValues ?? throw new ArgumentNullException(nameof(routeValues));
+            Keys = keys ?? throw new ArgumentNullException(nameof(keys));
         }
 
         public string JourneyName { get; }
 
-        public string? UniqueKey => RouteValues[Constants.UniqueKeyQueryParameterName] as string;
+        public IReadOnlyDictionary<string, StringValues> Keys { get; }
 
-        public IReadOnlyDictionary<string, object> RouteValues { get; }
+        public string? UniqueKey => Keys[Constants.UniqueKeyQueryParameterName];
 
         public string SerializableId
         {
@@ -34,23 +33,13 @@ namespace FormFlow
 
                 var url = urlEncoder.Encode(JourneyName);
 
-                foreach (var kvp in RouteValues)
+                foreach (var kvp in Keys)
                 {
-                    var routeValue = kvp.Value;
+                    var value = kvp.Value;
 
-                    if (!(routeValue is string) && routeValue is IEnumerable enumerable)
+                    foreach (var sv in value)
                     {
-                        foreach (var v in enumerable)
-                        {
-                            if (v != null)
-                            {
-                                url = QueryHelpers.AddQueryString(url, kvp.Key, v.ToString());
-                            }
-                        }
-                    }
-                    else
-                    {
-                        url = QueryHelpers.AddQueryString(url, kvp.Key, routeValue.ToString());
+                        url = QueryHelpers.AddQueryString(url, kvp.Key, sv);
                     }
                 }
 
@@ -58,42 +47,46 @@ namespace FormFlow
             }
         }
 
-        public static JourneyInstanceId Create(JourneyDescriptor journeyDescriptor, HttpRequest httpRequest)
+        public static JourneyInstanceId Create(JourneyDescriptor journeyDescriptor, IValueProvider valueProvider)
         {
             if (journeyDescriptor == null)
             {
                 throw new ArgumentNullException(nameof(journeyDescriptor));
             }
 
-            var routeValues = GetNormalizedRouteValues(httpRequest);
-
-            var instanceRouteValues = new RouteValueDictionary();
-
-            foreach (var routeParam in journeyDescriptor.RequestDataKeys)
+            if (valueProvider == null)
             {
-                if (!routeValues.TryGetValue(routeParam, out var routeValue))
+                throw new ArgumentNullException(nameof(valueProvider));
+            }
+
+            var instanceKeys = new Dictionary<string, StringValues>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var key in journeyDescriptor.RequestDataKeys)
+            {
+                var keyValueProviderResult = valueProvider.GetValue(key);
+
+                if (keyValueProviderResult.Length == 0)
                 {
-                    throw new InvalidOperationException(
-                        $"Request is missing dependent route data entry: '{routeParam}'.");
+                    throw new InvalidOperationException($"Cannot resolve '{key}' from request.");
                 }
 
-                instanceRouteValues.Add(routeParam, routeValue);
+                instanceKeys.Add(key, keyValueProviderResult.Values);
             }
 
             if (journeyDescriptor.AppendUniqueKey)
             {
-                var randExt = Guid.NewGuid().ToString();
+                var uniqueKey = Guid.NewGuid().ToString();
 
                 // It's important that this overwrite any existing random extension
-                instanceRouteValues[Constants.UniqueKeyQueryParameterName] = randExt;
+                instanceKeys[Constants.UniqueKeyQueryParameterName] = uniqueKey;
             }
 
-            return new JourneyInstanceId(journeyDescriptor.JourneyName, instanceRouteValues);
+            return new JourneyInstanceId(journeyDescriptor.JourneyName, instanceKeys);
         }
 
         public static bool TryResolve(
             JourneyDescriptor journeyDescriptor,
-            HttpRequest httpRequest,
+            IValueProvider valueProvider,
             out JourneyInstanceId instanceId)
         {
             if (journeyDescriptor == null)
@@ -101,43 +94,51 @@ namespace FormFlow
                 throw new ArgumentNullException(nameof(journeyDescriptor));
             }
 
-            var routeValues = GetNormalizedRouteValues(httpRequest);
-
-            var instanceRouteValues = new RouteValueDictionary();
-
-            foreach (var routeParam in journeyDescriptor.RequestDataKeys)
+            if (valueProvider == null)
             {
-                if (!routeValues.TryGetValue(routeParam, out var routeValue))
+                throw new ArgumentNullException(nameof(valueProvider));
+            }
+
+            var instanceKeys = new Dictionary<string, StringValues>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var key in journeyDescriptor.RequestDataKeys)
+            {
+                var keyValueProviderResult = valueProvider.GetValue(key);
+
+                if (keyValueProviderResult.Length == 0)
                 {
                     instanceId = default;
                     return false;
                 }
 
-                instanceRouteValues.Add(routeParam, routeValue);
+                instanceKeys.Add(key, keyValueProviderResult.Values);
             }
 
             if (journeyDescriptor.AppendUniqueKey)
             {
-                if (!routeValues.TryGetValue(Constants.UniqueKeyQueryParameterName, out var uniqueKey) ||
-                    uniqueKey == null)
+                var uniqueKeyValueProviderResult = valueProvider.GetValue(Constants.UniqueKeyQueryParameterName);
+
+                if (uniqueKeyValueProviderResult.Length == 0)
                 {
                     instanceId = default;
                     return false;
                 }
 
-                instanceRouteValues.Add(Constants.UniqueKeyQueryParameterName, uniqueKey);
+                instanceKeys.Add(
+                    Constants.UniqueKeyQueryParameterName,
+                    uniqueKeyValueProviderResult.FirstValue);
             }
 
-            instanceId = new JourneyInstanceId(journeyDescriptor.JourneyName, instanceRouteValues);
+            instanceId = new JourneyInstanceId(journeyDescriptor.JourneyName, instanceKeys);
             return true;
         }
 
         public bool Equals([AllowNull] JourneyInstanceId other) =>
-            JourneyName == other.JourneyName && RouteValues.SequenceEqual(other.RouteValues);
+            JourneyName == other.JourneyName && Keys.SequenceEqual(other.Keys);
 
         public override bool Equals(object? obj) => obj is JourneyInstanceId x && x.Equals(this);
 
-        public override int GetHashCode() => HashCode.Combine(JourneyName, RouteValues);
+        public override int GetHashCode() => HashCode.Combine(JourneyName, Keys);
 
         public override string ToString() => SerializableId;
 
@@ -147,15 +148,15 @@ namespace FormFlow
 
         public static implicit operator string(JourneyInstanceId instanceId) => instanceId.ToString();
 
-        private static RouteValueDictionary GetNormalizedRouteValues(HttpRequest request) =>
-            new RouteValueDictionary(
-                request.HttpContext.GetRouteData().Values
-                    .Concat(request.Query.ToDictionary(
-                        q => q.Key,
-                        q =>
-                        {
-                            var stringValues = q.Value;
-                            return stringValues.Count > 1 ? (object)stringValues.ToArray() : stringValues[0];
-                        })));
+        //private static RouteValueDictionary GetNormalizedRouteValues(HttpRequest request) =>
+        //    new RouteValueDictionary(
+        //        request.HttpContext.GetRouteData().Values
+        //            .Concat(request.Query.ToDictionary(
+        //                q => q.Key,
+        //                q =>
+        //                {
+        //                    var stringValues = q.Value;
+        //                    return stringValues.Count > 1 ? (object)stringValues.ToArray() : stringValues[0];
+        //                })));
     }
 }

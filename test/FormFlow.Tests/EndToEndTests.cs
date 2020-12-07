@@ -7,6 +7,7 @@ using FormFlow.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -131,20 +132,19 @@ namespace FormFlow.Tests
 
             return new JourneyInstanceId(
                 journeyName: "RouteValuesE2ETests",
-                new RouteValueDictionary(
-                    new Dictionary<string, object>()
-                    {
-                        { "id", id },
-                        { "subid", subid }
-                    }));
+                new Dictionary<string, StringValues>()
+                {
+                    { "id", id },
+                    { "subid", subid }
+                });
         }
 
         private async Task<JObject> ReadStateAndAssert(
             JourneyInstanceId instanceId,
             string expectedValue)
         {
-            var id = instanceId.RouteValues["id"];
-            var subid = instanceId.RouteValues["id"];
+            var id = instanceId.Keys["id"];
+            var subid = instanceId.Keys["id"];
 
             var response = await HttpClient.GetAsync(
                 $"/RouteValuesE2ETests/{id}/{subid}/ReadState");
@@ -159,8 +159,8 @@ namespace FormFlow.Tests
 
         private async Task UpdateState(JourneyInstanceId instanceId, string newValue)
         {
-            var id = instanceId.RouteValues["id"];
-            var subid = instanceId.RouteValues["subid"];
+            var id = instanceId.Keys["id"];
+            var subid = instanceId.Keys["subid"];
 
             var request = new HttpRequestMessage(
                 HttpMethod.Post,
