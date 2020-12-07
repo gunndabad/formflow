@@ -124,6 +124,40 @@ namespace FormFlow.Tests
         }
 
         [Fact]
+        public void Create_OptionalDependentKeyFound_ReturnsCorrectInstance()
+        {
+            var id = Guid.NewGuid().ToString();
+
+            CreateReturnsExpectedInstance(
+                requestDataKeys: new[] { "id?" },
+                useUniqueKey: false,
+                keys: new Dictionary<string, string>()
+                {
+                    { "id", id }
+                },
+                expectedInstanceKeyCount: 1,
+                assertions: instanceId =>
+                {
+                    Assert.Equal(id, instanceId.Keys["id"]);
+                },
+                expectedSerializableId: () => $"key?id={id}");
+        }
+
+        [Fact]
+        public void Create_OptionalDependentKeyNotFound_ReturnsCorrectInstance()
+        {
+            var id = Guid.NewGuid().ToString();
+
+            CreateReturnsExpectedInstance(
+                requestDataKeys: new[] { "id?" },
+                useUniqueKey: false,
+                keys: null,
+                expectedInstanceKeyCount: 0,
+                assertions: instanceId => { },
+                expectedSerializableId: () => $"key");
+        }
+
+        [Fact]
         public void TryResolve_MissingDependentRouteDataKey_ReturnsFalse()
         {
             // Arrange
@@ -238,6 +272,40 @@ namespace FormFlow.Tests
                 expectedSerializableId: () => $"key?id={id}&ffiid={randomKey}");
         }
 
+        [Fact]
+        public void TryResolve_OptionalDependentKeyFound_ReturnsCorrectInstance()
+        {
+            var id = Guid.NewGuid().ToString();
+
+            TryResolveReturnsExpectedInstance(
+                requestDataKeys: new[] { "id?" },
+                useUniqueKey: false,
+                keys: new Dictionary<string, string>()
+                {
+                    { "id", id }
+                },
+                expectedInstanceKeyCount: 1,
+                assertions: instanceId =>
+                {
+                    Assert.Equal(id, instanceId.Keys["id"]);
+                },
+                expectedSerializableId: () => $"key?id={id}");
+        }
+
+        [Fact]
+        public void TryResolve_OptionalDependentKeyNotFound_ReturnsCorrectInstance()
+        {
+            var id = Guid.NewGuid().ToString();
+
+            TryResolveReturnsExpectedInstance(
+                requestDataKeys: new[] { "id?" },
+                useUniqueKey: false,
+                keys: null,
+                expectedInstanceKeyCount: 0,
+                assertions: instanceId => { },
+                expectedSerializableId: () => $"key");
+        }
+
         private void CreateReturnsExpectedInstance(
             IEnumerable<string> requestDataKeys,
             bool useUniqueKey,
@@ -280,7 +348,7 @@ namespace FormFlow.Tests
                 requestDataKeys: requestDataKeys,
                 appendUniqueKey: useUniqueKey);
 
-            var valueProvider = new DictionaryValueProvider(keys);
+            var valueProvider = new DictionaryValueProvider(keys ?? new Dictionary<string, string>());
 
             // Act
             var result = JourneyInstanceId.TryResolve(journeyDescriptor, valueProvider, out var instanceId);
