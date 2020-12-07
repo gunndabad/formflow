@@ -63,14 +63,23 @@ namespace FormFlow
 
             foreach (var key in journeyDescriptor.RequestDataKeys)
             {
-                var keyValueProviderResult = valueProvider.GetValue(key);
+                var keyIsOptional = IsKeyOptional(key, out var normalizedKey);
+
+                var keyValueProviderResult = valueProvider.GetValue(normalizedKey);
 
                 if (keyValueProviderResult.Length == 0)
                 {
-                    throw new InvalidOperationException($"Cannot resolve '{key}' from request.");
+                    if (!keyIsOptional)
+                    {
+                        throw new InvalidOperationException($"Cannot resolve '{key}' from request.");
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
 
-                instanceKeys.Add(key, keyValueProviderResult.Values);
+                instanceKeys.Add(normalizedKey, keyValueProviderResult.Values);
             }
 
             if (journeyDescriptor.AppendUniqueKey)
@@ -103,15 +112,24 @@ namespace FormFlow
 
             foreach (var key in journeyDescriptor.RequestDataKeys)
             {
-                var keyValueProviderResult = valueProvider.GetValue(key);
+                var keyIsOptional = IsKeyOptional(key, out var normalizedKey);
+
+                var keyValueProviderResult = valueProvider.GetValue(normalizedKey);
 
                 if (keyValueProviderResult.Length == 0)
                 {
-                    instanceId = default;
-                    return false;
+                    if (!keyIsOptional)
+                    {
+                        instanceId = default;
+                        return false;
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
 
-                instanceKeys.Add(key, keyValueProviderResult.Values);
+                instanceKeys.Add(normalizedKey, keyValueProviderResult.Values);
             }
 
             if (journeyDescriptor.AppendUniqueKey)
@@ -148,15 +166,18 @@ namespace FormFlow
 
         public static implicit operator string(JourneyInstanceId instanceId) => instanceId.ToString();
 
-        //private static RouteValueDictionary GetNormalizedRouteValues(HttpRequest request) =>
-        //    new RouteValueDictionary(
-        //        request.HttpContext.GetRouteData().Values
-        //            .Concat(request.Query.ToDictionary(
-        //                q => q.Key,
-        //                q =>
-        //                {
-        //                    var stringValues = q.Value;
-        //                    return stringValues.Count > 1 ? (object)stringValues.ToArray() : stringValues[0];
-        //                })));
+        private static bool IsKeyOptional(string key, out string normalizedKey)
+        {
+            if (key.EndsWith("?"))
+            {
+                normalizedKey = key[0..^1];
+                return true;
+            }
+            else
+            {
+                normalizedKey = key;
+                return false;
+            }
+        }
     }
 }
