@@ -25,10 +25,10 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                journeyName: "RouteValuesE2ETests",
+                journeyName: "E2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
-                stateType: typeof(RouteValuesE2ETestsState),
-                state: RouteValuesE2ETestsState.CreateInitialState(),
+                stateType: typeof(E2ETestsState),
+                state: E2ETestsState.CreateInitialState(),
                 properties: new PropertiesBuilder().Add("bar", 42).Build());
 
             // Act & Assert
@@ -41,10 +41,10 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                journeyName: "RouteValuesE2ETests",
+                journeyName: "E2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
-                stateType: typeof(RouteValuesE2ETestsState),
-                state: RouteValuesE2ETestsState.CreateInitialState(),
+                stateType: typeof(E2ETestsState),
+                state: E2ETestsState.CreateInitialState(),
                 properties: new PropertiesBuilder().Add("bar", 42).Build());
 
             // Act & Assert
@@ -56,15 +56,15 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                journeyName: "RouteValuesE2ETests",
+                journeyName: "E2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
-                stateType: typeof(RouteValuesE2ETestsState),
-                state: RouteValuesE2ETestsState.CreateInitialState(),
+                stateType: typeof(E2ETestsState),
+                state: E2ETestsState.CreateInitialState(),
                 properties: new PropertiesBuilder().Add("bar", 42).Build());
 
             var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"/RouteValuesE2ETests/{id}/{subid}/Complete")
+                $"/E2ETests/{id}/{subid}/Complete?ffiid={instance.InstanceId.UniqueKey}")
             {
             };
 
@@ -82,15 +82,15 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                journeyName: "RouteValuesE2ETests",
+                journeyName: "E2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
-                stateType: typeof(RouteValuesE2ETestsState),
-                state: RouteValuesE2ETestsState.CreateInitialState(),
+                stateType: typeof(E2ETestsState),
+                state: E2ETestsState.CreateInitialState(),
                 properties: new PropertiesBuilder().Add("bar", 42).Build());
 
             var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"/RouteValuesE2ETests/{id}/{subid}/Complete")
+                $"/E2ETests/{id}/{subid}/Complete?ffiid={instance.InstanceId.UniqueKey}")
             {
             };
 
@@ -108,15 +108,15 @@ namespace FormFlow.Tests
         {
             // Arrange
             var instance = StateProvider.CreateInstance(
-                journeyName: "RouteValuesE2ETests",
+                journeyName: "E2ETests",
                 instanceId: GenerateInstanceId(out var id, out var subid),
-                stateType: typeof(RouteValuesE2ETestsState),
-                state: RouteValuesE2ETestsState.CreateInitialState(),
+                stateType: typeof(E2ETestsState),
+                state: E2ETestsState.CreateInitialState(),
                 properties: new PropertiesBuilder().Add("bar", 42).Build());
 
             var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"/RouteValuesE2ETests/{id}/{subid}/Delete")
+                $"/E2ETests/{id}/{subid}/Delete?ffiid={instance.InstanceId.UniqueKey}")
             {
             };
 
@@ -129,13 +129,15 @@ namespace FormFlow.Tests
         {
             id = Guid.NewGuid().ToString();
             subid = Guid.NewGuid().ToString();
+            var uniqueKey = Guid.NewGuid().ToString();
 
             return new JourneyInstanceId(
-                journeyName: "RouteValuesE2ETests",
+                journeyName: "E2ETests",
                 new Dictionary<string, StringValues>()
                 {
                     { "id", id },
-                    { "subid", subid }
+                    { "subid", subid },
+                    { "ffiid", uniqueKey }
                 });
         }
 
@@ -144,10 +146,10 @@ namespace FormFlow.Tests
             string expectedValue)
         {
             var id = instanceId.Keys["id"];
-            var subid = instanceId.Keys["id"];
+            var subid = instanceId.Keys["subid"];
 
             var response = await HttpClient.GetAsync(
-                $"/RouteValuesE2ETests/{id}/{subid}/ReadState");
+                $"/E2ETests/{id}/{subid}/ReadState?ffiid={instanceId.UniqueKey}");
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -164,7 +166,7 @@ namespace FormFlow.Tests
 
             var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"/RouteValuesE2ETests/{id}/{subid}/UpdateState")
+                $"/E2ETests/{id}/{subid}/UpdateState?ffiid={instanceId.UniqueKey}")
             {
                 Content = new FormUrlEncodedContent(new Dictionary<string, string>()
                 {
@@ -181,13 +183,18 @@ namespace FormFlow.Tests
         }
     }
 
-    [Route("RouteValuesE2ETests/{id}/{subid}")]
-    [JourneyMetadata(journeyName: "RouteValuesE2ETests", stateType: typeof(RouteValuesE2ETestsState), requestDataKeys: new[] { "id", "subid" }, appendUniqueKey: false)]
-    public class RouteValuesE2ETestsController : Controller
+    [Route("E2ETests/{id}/{subid}")]
+    [JourneyMetadata(
+        journeyName: "E2ETests",
+        stateType: typeof(E2ETestsState),
+        requestDataKeys: new[] { "id", "subid" },
+        appendUniqueKey: true)]
+    public class E2ETestsController : Controller
     {
         private readonly JourneyInstanceProvider _journeyInstanceProvider;
+        private JourneyInstance<E2ETestsState> _journeyInstance;
 
-        public RouteValuesE2ETestsController(JourneyInstanceProvider journeyInstanceProvider)
+        public E2ETestsController(JourneyInstanceProvider journeyInstanceProvider)
         {
             _journeyInstanceProvider = journeyInstanceProvider;
         }
@@ -196,12 +203,10 @@ namespace FormFlow.Tests
         [RequireJourneyInstance]
         public IActionResult ReadState()
         {
-            var instance = _journeyInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
-
             return Json(new
             {
-                Properties = instance.Properties,
-                State = instance.State
+                Properties = _journeyInstance.Properties,
+                State = _journeyInstance.State
             });
         }
 
@@ -209,17 +214,15 @@ namespace FormFlow.Tests
         [RequireJourneyInstance]
         public IActionResult UpdateState(string newValue)
         {
-            var instance = _journeyInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
-            instance.UpdateState(state => state.Value = newValue);
-            return RedirectToAction(nameof(ReadState)).WithJourneyInstance(instance);
+            _journeyInstance.UpdateState(state => state.Value = newValue);
+            return RedirectToAction(nameof(ReadState)).WithJourneyInstance(_journeyInstance);
         }
 
         [HttpPost("Complete")]
         [RequireJourneyInstance]
         public IActionResult Complete()
         {
-            var instance = _journeyInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
-            instance.Complete();
+            _journeyInstance.Complete();
             return Ok();
         }
 
@@ -227,24 +230,28 @@ namespace FormFlow.Tests
         [RequireJourneyInstance]
         public IActionResult Delete()
         {
-            var instance = _journeyInstanceProvider.GetInstance<RouteValuesE2ETestsState>();
-            instance.Delete();
+            _journeyInstance.Delete();
             return Ok();
         }
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            _journeyInstanceProvider.GetOrCreateInstance(
-                RouteValuesE2ETestsState.CreateInitialState,
+            _journeyInstance = _journeyInstanceProvider.GetOrCreateInstance(
+                E2ETestsState.CreateInitialState,
                 properties: new PropertiesBuilder().Add("bar", 42).Build());
+
+            if (!_journeyInstanceProvider.IsCurrentInstance(_journeyInstance))
+            {
+                context.Result = RedirectToAction().WithJourneyInstance(_journeyInstance);
+            }
         }
     }
 
-    public class RouteValuesE2ETestsState
+    public class E2ETestsState
     {
         public string Value { get; set; }
 
-        public static RouteValuesE2ETestsState CreateInitialState() => new RouteValuesE2ETestsState()
+        public static E2ETestsState CreateInitialState() => new E2ETestsState()
         {
             Value = "initial"
         };
