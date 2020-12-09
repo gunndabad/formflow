@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace FormFlow
@@ -14,6 +15,11 @@ namespace FormFlow
 
         public PropertiesBuilder Add(object key, object value)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             _values.Add(key, value);
             return this;
         }
