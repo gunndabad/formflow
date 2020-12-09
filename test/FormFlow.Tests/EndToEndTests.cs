@@ -212,10 +212,11 @@ namespace FormFlow.Tests
 
         [HttpPost("UpdateState")]
         [RequireJourneyInstance]
-        public IActionResult UpdateState(string newValue)
+        public IActionResult UpdateState(string newValue, string id, string subid)
         {
             _journeyInstance.UpdateState(state => state.Value = newValue);
-            return RedirectToAction(nameof(ReadState)).WithJourneyInstance(_journeyInstance);
+            return RedirectToAction(nameof(ReadState), new { id, subid })
+                .WithJourneyInstanceUniqueKey(_journeyInstance);
         }
 
         [HttpPost("Complete")]
@@ -242,7 +243,8 @@ namespace FormFlow.Tests
 
             if (!_journeyInstanceProvider.IsCurrentInstance(_journeyInstance))
             {
-                context.Result = RedirectToAction().WithJourneyInstance(_journeyInstance);
+                context.Result = RedirectToAction()
+                    .WithJourneyInstanceUniqueKey(_journeyInstance);
             }
         }
     }
