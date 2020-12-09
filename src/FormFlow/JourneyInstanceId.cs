@@ -23,7 +23,7 @@ namespace FormFlow
 
         public IReadOnlyDictionary<string, StringValues> Keys { get; }
 
-        public string? UniqueKey => Keys[Constants.UniqueKeyQueryParameterName];
+        public string? UniqueKey => Keys.GetValueOrDefault(Constants.UniqueKeyQueryParameterName);
 
         public string SerializableId
         {
