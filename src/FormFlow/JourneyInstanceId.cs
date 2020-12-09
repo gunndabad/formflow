@@ -59,7 +59,7 @@ namespace FormFlow
                 throw new ArgumentNullException(nameof(valueProvider));
             }
 
-            var instanceKeys = new Dictionary<string, StringValues>(StringComparer.OrdinalIgnoreCase);
+            var instanceKeysBuilder = new KeysBuilder();
 
             foreach (var key in journeyDescriptor.RequestDataKeys)
             {
@@ -79,18 +79,17 @@ namespace FormFlow
                     }
                 }
 
-                instanceKeys.Add(normalizedKey, keyValueProviderResult.Values);
+                instanceKeysBuilder.With(normalizedKey, keyValueProviderResult.Values);
             }
 
             if (journeyDescriptor.AppendUniqueKey)
             {
                 var uniqueKey = Guid.NewGuid().ToString();
 
-                // It's important that this overwrite any existing random extension
-                instanceKeys[Constants.UniqueKeyQueryParameterName] = uniqueKey;
+                instanceKeysBuilder.With(Constants.UniqueKeyQueryParameterName, uniqueKey);
             }
 
-            return new JourneyInstanceId(journeyDescriptor.JourneyName, instanceKeys);
+            return new JourneyInstanceId(journeyDescriptor.JourneyName, instanceKeysBuilder.Build());
         }
 
         public static bool TryResolve(
@@ -108,7 +107,7 @@ namespace FormFlow
                 throw new ArgumentNullException(nameof(valueProvider));
             }
 
-            var instanceKeys = new Dictionary<string, StringValues>(StringComparer.OrdinalIgnoreCase);
+            var instanceKeysBuilder = new KeysBuilder();
 
             foreach (var key in journeyDescriptor.RequestDataKeys)
             {
@@ -129,7 +128,7 @@ namespace FormFlow
                     }
                 }
 
-                instanceKeys.Add(normalizedKey, keyValueProviderResult.Values);
+                instanceKeysBuilder.With(normalizedKey, keyValueProviderResult.Values);
             }
 
             if (journeyDescriptor.AppendUniqueKey)
@@ -142,12 +141,12 @@ namespace FormFlow
                     return false;
                 }
 
-                instanceKeys.Add(
+                instanceKeysBuilder.With(
                     Constants.UniqueKeyQueryParameterName,
                     uniqueKeyValueProviderResult.FirstValue);
             }
 
-            instanceId = new JourneyInstanceId(journeyDescriptor.JourneyName, instanceKeys);
+            instanceId = new JourneyInstanceId(journeyDescriptor.JourneyName, instanceKeysBuilder.Build());
             return true;
         }
 
