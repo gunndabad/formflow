@@ -1,27 +1,31 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 namespace FormFlow
 {
     public static class RedirectToActionResultExtensions
     {
-        public static RedirectToActionResult WithJourneyInstance(
+        public static RedirectToActionResult WithJourneyInstanceUniqueKey(
             this RedirectToActionResult result,
             JourneyInstance instance)
         {
-            return WithJourneyInstance(result, instance.InstanceId);
+            return WithJourneyInstanceUniqueKey(result, instance.InstanceId);
         }
 
-        public static RedirectToActionResult WithJourneyInstance(
+        public static RedirectToActionResult WithJourneyInstanceUniqueKey(
             this RedirectToActionResult result,
             JourneyInstanceId instanceId)
         {
-            result.RouteValues ??= new RouteValueDictionary();
-
-            foreach (var kvp in instanceId.Keys)
+            if (instanceId.UniqueKey == null)
             {
-                result.RouteValues[kvp.Key] = kvp.Value;
+                throw new ArgumentException(
+                    "Specified instance does not have a unique key.",
+                    nameof(instanceId));
             }
+
+            result.RouteValues ??= new RouteValueDictionary();
+            result.RouteValues["ffiid"] = instanceId.UniqueKey;
 
             return result;
         }
