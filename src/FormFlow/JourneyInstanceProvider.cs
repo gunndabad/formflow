@@ -250,6 +250,13 @@ namespace FormFlow
 
             var actionContext = ResolveActionContext();
 
+            // If we've already created a JourneyInstance for this request, use that
+            if (actionContext.HttpContext.Items.TryGetValue(typeof(JourneyInstance), out var existingInstanceObj))
+            {
+                instance = (JourneyInstance)existingInstanceObj;
+                return true;
+            }
+
             var journeyDescriptor = ResolveJourneyDescriptor(actionContext, throwIfNotFound: false);
 
             if (journeyDescriptor == null)
@@ -289,7 +296,12 @@ namespace FormFlow
                 return false;
             }
 
-            instance = persistedInstance;
+            actionContext.HttpContext.Items.TryAdd(typeof(JourneyInstance), persistedInstance);
+
+            // There's a race here; another thread could resolve an instance and beat us to adding it to cache.
+            // Ensure we return the cached instance.
+            instance = (JourneyInstance)actionContext.HttpContext.Items[typeof(JourneyInstance)];
+
             return true;
         }
 

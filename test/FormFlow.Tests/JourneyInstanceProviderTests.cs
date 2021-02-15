@@ -1397,6 +1397,53 @@ namespace FormFlow.Tests
             Assert.Null(instance);
         }
 
+        [Fact]
+        public void TryResolveExistingInstance_ReturnsSameObjectWithinSameRequest()
+        {
+            // Arrange
+            var journeyName = "test-flow";
+            var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var uniqueKey);
+            var stateType = typeof(TestState);
+            var state = new TestState();
+
+            var stateProvider = new Mock<IUserInstanceStateProvider>();
+            stateProvider
+                .Setup(s => s.GetInstance(instanceId))
+                .Returns(() =>
+                    JourneyInstance.Create(
+                        stateProvider.Object,
+                        journeyName,
+                        instanceId,
+                        stateType,
+                        state,
+                        properties: PropertiesBuilder.CreateEmpty()));
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
+
+            var actionDescriptor = new ActionDescriptor();
+            actionDescriptor.SetProperty(
+                new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
+
+            CreateActionContext(
+                httpContext,
+                actionDescriptor,
+                out _,
+                out var actionContextAccessor);
+
+            var instanceProvider = new JourneyInstanceProvider(
+                stateProvider.Object,
+                _options,
+                actionContextAccessor);
+
+            // Act
+            instanceProvider.TryResolveExistingInstance(out var instance1);
+            instanceProvider.TryResolveExistingInstance(out var instance2);
+
+            // Assert
+            Assert.Same(instance1, instance2);
+        }
+
         private static void CreateActionContext(
             HttpContext httpContext,
             ActionDescriptor actionDescriptor,
