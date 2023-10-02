@@ -1,9 +1,8 @@
-namespace FormFlow.State
+namespace FormFlow.State;
+
+public interface IUserInstanceStateStore
 {
-    public interface IUserInstanceStateStore
-    {
-        void DeleteState(string key);
-        void SetState(string key, byte[] data);
-        bool TryGetState(string key, out byte[] data);
-    }
+    void DeleteState(string key);
+    void SetState(string key, byte[] data);
+    bool TryGetState(string key, out byte[] data);
 }

@@ -2,78 +2,77 @@ using System;
 using System.Collections.Generic;
 using FormFlow.State;
 
-namespace FormFlow.Tests.Infrastructure
+namespace FormFlow.Tests.Infrastructure;
+
+public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
 {
-    public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
+    private readonly Dictionary<string, Entry> _instances;
+
+    public InMemoryInstanceStateProvider()
     {
-        private readonly Dictionary<string, Entry> _instances;
+        _instances = new Dictionary<string, Entry>();
+    }
 
-        public InMemoryInstanceStateProvider()
+    public void Clear() => _instances.Clear();
+
+    public JourneyInstance CreateInstance(
+        string journeyName,
+        JourneyInstanceId instanceId,
+        Type stateType,
+        object state,
+        IReadOnlyDictionary<object, object>? properties)
+    {
+        _instances.Add(instanceId, new Entry()
         {
-            _instances = new Dictionary<string, Entry>();
-        }
+            JourneyName = journeyName,
+            StateType = stateType,
+            State = state,
+            Properties = properties
+        });
 
-        public void Clear() => _instances.Clear();
+        var instance = JourneyInstance.Create(
+            this,
+            journeyName,
+            instanceId,
+            stateType,
+            state,
+            properties ?? PropertiesBuilder.CreateEmpty());
 
-        public JourneyInstance CreateInstance(
-            string journeyName,
-            JourneyInstanceId instanceId,
-            Type stateType,
-            object state,
-            IReadOnlyDictionary<object, object>? properties)
-        {
-            _instances.Add(instanceId, new Entry()
-            {
-                JourneyName = journeyName,
-                StateType = stateType,
-                State = state,
-                Properties = properties
-            });
+        return instance;
+    }
 
-            var instance = JourneyInstance.Create(
-                this,
-                journeyName,
-                instanceId,
-                stateType,
-                state,
-                properties ?? PropertiesBuilder.CreateEmpty());
+    public void CompleteInstance(JourneyInstanceId instanceId)
+    {
+        _instances[instanceId].Completed = true;
+    }
 
-            return instance;
-        }
+    public void DeleteInstance(JourneyInstanceId instanceId)
+    {
+        _instances.Remove(instanceId);
+    }
 
-        public void CompleteInstance(JourneyInstanceId instanceId)
-        {
-            _instances[instanceId].Completed = true;
-        }
+    public JourneyInstance? GetInstance(JourneyInstanceId instanceId)
+    {
+        _instances.TryGetValue(instanceId, out var entry);
 
-        public void DeleteInstance(JourneyInstanceId instanceId)
-        {
-            _instances.Remove(instanceId);
-        }
+        var instance = entry != null ?
+            JourneyInstance.Create(this, entry.JourneyName!, instanceId, entry.StateType!, entry.State!, entry.Properties!, entry.Completed) :
+            null;
 
-        public JourneyInstance? GetInstance(JourneyInstanceId instanceId)
-        {
-            _instances.TryGetValue(instanceId, out var entry);
+        return instance;
+    }
 
-            var instance = entry != null ?
-                JourneyInstance.Create(this, entry.JourneyName!, instanceId, entry.StateType!, entry.State!, entry.Properties!, entry.Completed) :
-                null;
+    public void UpdateInstanceState(JourneyInstanceId instanceId, object state)
+    {
+        _instances[instanceId].State = state;
+    }
 
-            return instance;
-        }
-
-        public void UpdateInstanceState(JourneyInstanceId instanceId, object state)
-        {
-            _instances[instanceId].State = state;
-        }
-
-        private class Entry
-        {
-            public string? JourneyName { get; set; }
-            public IReadOnlyDictionary<object, object>? Properties { get; set; }
-            public object? State { get; set; }
-            public Type? StateType { get; set; }
-            public bool Completed { get; set; }
-        }
+    private class Entry
+    {
+        public string? JourneyName { get; set; }
+        public IReadOnlyDictionary<object, object>? Properties { get; set; }
+        public object? State { get; set; }
+        public Type? StateType { get; set; }
+        public bool Completed { get; set; }
     }
 }

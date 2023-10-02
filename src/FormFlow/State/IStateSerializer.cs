@@ -1,8 +1,7 @@
-namespace FormFlow.State
+namespace FormFlow.State;
+
+public interface IStateSerializer
 {
-    public interface IStateSerializer
-    {
-        object Deserialize(byte[] bytes);
-        byte[] Serialize(object state);
-    }
+    object Deserialize(byte[] bytes);
+    byte[] Serialize(object state);
 }

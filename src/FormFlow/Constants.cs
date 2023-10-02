@@ -1,7 +1,6 @@
-namespace FormFlow
+namespace FormFlow;
+
+internal static class Constants
 {
-    internal static class Constants
-    {
-        public static string UniqueKeyQueryParameterName = "ffiid";
-    }
+    public static string UniqueKeyQueryParameterName = "ffiid";
 }

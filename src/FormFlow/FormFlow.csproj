@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Copyright>Copyright © 2020 James Gunn</Copyright>
+    <TargetFramework>net6.0</TargetFramework>
+    <Copyright>Copyright © James Gunn</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/gunndabad/formflow</PackageProjectUrl>
     <RepositoryUrl>https://github.com/gunndabad/formflow</RepositoryUrl>

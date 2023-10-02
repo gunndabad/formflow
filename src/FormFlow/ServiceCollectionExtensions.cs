@@ -9,99 +9,98 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-namespace FormFlow
+namespace FormFlow;
+
+public static class ServiceCollectionExtensions
 {
-    public static class ServiceCollectionExtensions
+    public static IServiceCollection AddFormFlow(this IServiceCollection services)
     {
-        public static IServiceCollection AddFormFlow(this IServiceCollection services)
+        if (services == null)
         {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
+            throw new ArgumentNullException(nameof(services));
+        }
 
-            services.AddHttpContextAccessor();
-            services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
-            services.AddSingleton<JourneyInstanceProvider>();
-            services.TryAddSingleton<IStateSerializer, JsonStateSerializer>();
-            services.TryAddSingleton<IUserInstanceStateProvider, UserInstanceStateProvider>();
-            services.TryAddSingleton<IUserInstanceStateStore, SessionUserInstanceStateStore>();
-            services.AddSingleton<IConfigureOptions<FormFlowOptions>, FormFlowOptionsSetup>();
+        services.AddHttpContextAccessor();
+        services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
+        services.AddSingleton<JourneyInstanceProvider>();
+        services.TryAddSingleton<IStateSerializer, JsonStateSerializer>();
+        services.TryAddSingleton<IUserInstanceStateProvider, UserInstanceStateProvider>();
+        services.TryAddSingleton<IUserInstanceStateStore, SessionUserInstanceStateStore>();
+        services.AddSingleton<IConfigureOptions<FormFlowOptions>, FormFlowOptionsSetup>();
 
-            services.Configure<MvcOptions>(options =>
+        services.Configure<MvcOptions>(options =>
+        {
+            options.Filters.Add(new MissingInstanceActionFilter());
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection AddFormFlow(
+        this IServiceCollection services,
+        Action<FormFlowOptions> configure)
+    {
+        if (services == null)
+        {
+            throw new ArgumentNullException(nameof(services));
+        }
+
+        if (configure == null)
+        {
+            throw new ArgumentNullException(nameof(configure));
+        }
+
+        services.Configure(configure);
+        services.AddFormFlow();
+
+        return services;
+    }
+
+    public static IServiceCollection AddJourneyStateTypes(
+        this IServiceCollection services,
+        Assembly assembly)
+    {
+        if (services == null)
+        {
+            throw new ArgumentNullException(nameof(services));
+        }
+
+        if (assembly == null)
+        {
+            throw new ArgumentNullException(nameof(assembly));
+        }
+
+        var stateTypes = assembly.GetTypes()
+            .Where(t => t.IsPublic && !t.IsAbstract && t.GetCustomAttribute<JourneyStateAttribute>() != null);
+
+        foreach (var type in stateTypes)
+        {
+            var instanceType = typeof(JourneyInstance<>).MakeGenericType(type);
+
+            services.AddTransient(instanceType, sp =>
             {
-                options.Filters.Add(new MissingInstanceActionFilter());
+                var instanceProvider = sp.GetRequiredService<JourneyInstanceProvider>();
+                return instanceProvider.GetInstance() ?? throw new InvalidOperationException("No current journey.");
             });
-
-            return services;
         }
 
-        public static IServiceCollection AddFormFlow(
-            this IServiceCollection services,
-            Action<FormFlowOptions> configure)
+        return services;
+    }
+
+    public static IServiceCollection AddFormFlowStateTypes(
+        this IServiceCollection services,
+        Type fromAssemblyContainingType)
+    {
+        if (services == null)
         {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            services.Configure(configure);
-            services.AddFormFlow();
-
-            return services;
+            throw new ArgumentNullException(nameof(services));
         }
 
-        public static IServiceCollection AddJourneyStateTypes(
-            this IServiceCollection services,
-            Assembly assembly)
+        if (fromAssemblyContainingType == null)
         {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (assembly == null)
-            {
-                throw new ArgumentNullException(nameof(assembly));
-            }
-
-            var stateTypes = assembly.GetTypes()
-                .Where(t => t.IsPublic && !t.IsAbstract && t.GetCustomAttribute<JourneyStateAttribute>() != null);
-
-            foreach (var type in stateTypes)
-            {
-                var instanceType = typeof(JourneyInstance<>).MakeGenericType(type);
-
-                services.AddTransient(instanceType, sp =>
-                {
-                    var instanceProvider = sp.GetRequiredService<JourneyInstanceProvider>();
-                    return instanceProvider.GetInstance();
-                });
-            }
-
-            return services;
+            throw new ArgumentNullException(nameof(fromAssemblyContainingType));
         }
 
-        public static IServiceCollection AddFormFlowStateTypes(
-            this IServiceCollection services,
-            Type fromAssemblyContainingType)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (fromAssemblyContainingType == null)
-            {
-                throw new ArgumentNullException(nameof(fromAssemblyContainingType));
-            }
-
-            return AddJourneyStateTypes(services, fromAssemblyContainingType.Assembly);
-        }
+        return AddJourneyStateTypes(services, fromAssemblyContainingType.Assembly);
     }
 }
