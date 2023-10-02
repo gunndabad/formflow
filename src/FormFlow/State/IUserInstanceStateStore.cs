@@ -1,4 +1,4 @@
-﻿namespace FormFlow.State
+namespace FormFlow.State
 {
     public interface IUserInstanceStateStore
     {

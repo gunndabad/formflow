@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 using System;
 using System.Collections.Generic;
 
@@ -93,7 +93,7 @@ namespace FormFlow.State
         public JourneyInstance GetInstance(JourneyInstanceId instanceId)
         {
             var storeKey = GetKeyForInstance(instanceId);
-            
+
             if (_store.TryGetState(storeKey, out var serialized))
             {
                 var entry = (StoreEntry)_stateSerializer.Deserialize(serialized);

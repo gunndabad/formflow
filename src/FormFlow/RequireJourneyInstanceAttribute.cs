@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using FormFlow.Filters;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 

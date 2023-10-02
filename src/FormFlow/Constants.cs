@@ -1,4 +1,4 @@
-﻿namespace FormFlow
+namespace FormFlow
 {
     internal static class Constants
     {

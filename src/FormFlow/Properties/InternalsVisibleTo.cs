@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("FormFlow.Tests")] 
+[assembly: InternalsVisibleTo("FormFlow.Tests")]
