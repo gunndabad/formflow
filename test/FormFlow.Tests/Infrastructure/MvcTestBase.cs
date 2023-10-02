@@ -29,8 +29,9 @@ namespace FormFlow.Tests.Infrastructure
             string journeyName,
             IReadOnlyDictionary<string, StringValues> keys,
             TState state,
-            IReadOnlyDictionary<object, object> properties = null,
-            string uniqueKey = null)
+            IReadOnlyDictionary<object, object>? properties = null,
+            string? uniqueKey = null)
+            where TState : notnull
         {
             var routeValues = new RouteValueDictionary(keys);
 

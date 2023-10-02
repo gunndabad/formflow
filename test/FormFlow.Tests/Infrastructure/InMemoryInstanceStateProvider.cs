@@ -20,7 +20,7 @@ namespace FormFlow.Tests.Infrastructure
             JourneyInstanceId instanceId,
             Type stateType,
             object state,
-            IReadOnlyDictionary<object, object> properties)
+            IReadOnlyDictionary<object, object>? properties)
         {
             _instances.Add(instanceId, new Entry()
             {
@@ -51,12 +51,12 @@ namespace FormFlow.Tests.Infrastructure
             _instances.Remove(instanceId);
         }
 
-        public JourneyInstance GetInstance(JourneyInstanceId instanceId)
+        public JourneyInstance? GetInstance(JourneyInstanceId instanceId)
         {
             _instances.TryGetValue(instanceId, out var entry);
 
             var instance = entry != null ?
-                JourneyInstance.Create(this, entry.JourneyName, instanceId, entry.StateType, entry.State, entry.Properties, entry.Completed) :
+                JourneyInstance.Create(this, entry.JourneyName!, instanceId, entry.StateType!, entry.State!, entry.Properties!, entry.Completed) :
                 null;
 
             return instance;
@@ -69,10 +69,10 @@ namespace FormFlow.Tests.Infrastructure
 
         private class Entry
         {
-            public string JourneyName { get; set; }
-            public IReadOnlyDictionary<object, object> Properties { get; set; }
-            public object State { get; set; }
-            public Type StateType { get; set; }
+            public string? JourneyName { get; set; }
+            public IReadOnlyDictionary<object, object>? Properties { get; set; }
+            public object? State { get; set; }
+            public Type? StateType { get; set; }
             public bool Completed { get; set; }
         }
     }

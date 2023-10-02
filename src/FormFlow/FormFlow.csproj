@@ -10,7 +10,6 @@
     <PackageTags></PackageTags>
     <MinVerTagPrefix>v</MinVerTagPrefix>
     <MinVerMinimumMajorMinor>0.4</MinVerMinimumMajorMinor>
-    <Nullable>Enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

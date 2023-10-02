@@ -43,7 +43,7 @@ namespace FormFlow.Tests
         [Fact]
         public void Create_NoDependentKeysWithUniqueKey_ReturnsCorrectInstance()
         {
-            string randomKey = default;
+            string? randomKey = default;
 
             CreateReturnsExpectedInstance(
                 requestDataKeys: Array.Empty<string>(),
@@ -82,7 +82,7 @@ namespace FormFlow.Tests
         public void Create_DependentKeyFoundWithUniqueKey_ReturnsCorrectInstance()
         {
             var id = Guid.NewGuid().ToString();
-            string randomKey = default;
+            string? randomKey = default;
 
             CreateReturnsExpectedInstance(
                 requestDataKeys: new[] { "id" },
@@ -104,7 +104,7 @@ namespace FormFlow.Tests
         public void Create_UniqueKeyAlreadyInKeys_ReturnsInstanceWithNewUniqueKey()
         {
             var currentRandomKey = Guid.NewGuid().ToString();
-            string newRandomKey = default;
+            string? newRandomKey = default;
 
             CreateReturnsExpectedInstance(
                 requestDataKeys: Array.Empty<string>(),
@@ -309,7 +309,7 @@ namespace FormFlow.Tests
         private void CreateReturnsExpectedInstance(
             IEnumerable<string> requestDataKeys,
             bool useUniqueKey,
-            IDictionary<string, string> keys,
+            IDictionary<string, string>? keys,
             int expectedInstanceKeyCount,
             Action<JourneyInstanceId> assertions,
             Func<string> expectedSerializableId)
@@ -336,7 +336,7 @@ namespace FormFlow.Tests
         private void TryResolveReturnsExpectedInstance(
             IEnumerable<string> requestDataKeys,
             bool useUniqueKey,
-            IDictionary<string, string> keys,
+            IDictionary<string, string>? keys,
             int expectedInstanceKeyCount,
             Action<JourneyInstanceId> assertions,
             Func<string> expectedSerializableId)

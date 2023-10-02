@@ -45,7 +45,7 @@ namespace FormFlow.Tests
                 instanceId: GenerateInstanceId(out var id, out var subid),
                 stateType: typeof(E2ETestsState),
                 state: E2ETestsState.CreateInitialState(),
-                properties: new PropertiesBuilder().Add("bar", 42).Build());
+                properties: new PropertiesBuilder().Add("bar", 42).Add("baz", "ah").Build());
 
             // Act & Assert
             await UpdateState(instance.InstanceId, newValue: "updated");
@@ -192,7 +192,7 @@ namespace FormFlow.Tests
     public class E2ETestsController : Controller
     {
         private readonly JourneyInstanceProvider _journeyInstanceProvider;
-        private JourneyInstance<E2ETestsState> _journeyInstance;
+        private JourneyInstance<E2ETestsState>? _journeyInstance;
 
         public E2ETestsController(JourneyInstanceProvider journeyInstanceProvider)
         {
@@ -205,7 +205,7 @@ namespace FormFlow.Tests
         {
             return Json(new
             {
-                Properties = _journeyInstance.Properties,
+                Properties = _journeyInstance!.Properties,
                 State = _journeyInstance.State
             });
         }
@@ -214,7 +214,7 @@ namespace FormFlow.Tests
         [RequireJourneyInstance]
         public IActionResult UpdateState(string newValue, string id, string subid)
         {
-            _journeyInstance.UpdateState(state => state.Value = newValue);
+            _journeyInstance!.UpdateState(state => state.Value = newValue);
             return RedirectToAction(nameof(ReadState), new { id, subid })
                 .WithJourneyInstanceUniqueKey(_journeyInstance);
         }
@@ -223,7 +223,7 @@ namespace FormFlow.Tests
         [RequireJourneyInstance]
         public IActionResult Complete()
         {
-            _journeyInstance.Complete();
+            _journeyInstance!.Complete();
             return Ok();
         }
 
@@ -231,7 +231,7 @@ namespace FormFlow.Tests
         [RequireJourneyInstance]
         public IActionResult Delete()
         {
-            _journeyInstance.Delete();
+            _journeyInstance!.Delete();
             return Ok();
         }
 
@@ -239,7 +239,7 @@ namespace FormFlow.Tests
         {
             _journeyInstance = _journeyInstanceProvider.GetOrCreateInstance(
                 E2ETestsState.CreateInitialState,
-                properties: new PropertiesBuilder().Add("bar", 42).Build());
+                properties: new PropertiesBuilder().Add("bar", 42).Add("baz", "wwww").Build());
 
             if (!_journeyInstanceProvider.IsCurrentInstance(_journeyInstance))
             {
@@ -251,7 +251,7 @@ namespace FormFlow.Tests
 
     public class E2ETestsState
     {
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         public static E2ETestsState CreateInitialState() => new E2ETestsState()
         {

@@ -366,7 +366,7 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
-                .Returns((JourneyInstance)null);
+                .Returns((JourneyInstance?)null);
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -442,7 +442,7 @@ namespace FormFlow.Tests
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(journeyName, result.JourneyName);
+            Assert.Equal(journeyName, result!.JourneyName);
             Assert.Equal(instanceId, result.InstanceId);
             Assert.Equal(stateType, result.StateType);
             Assert.Same(state, result.State);
@@ -572,7 +572,7 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
-                .Returns((JourneyInstance)null);
+                .Returns((JourneyInstance?)null);
             stateProvider
                 .Setup(mock => mock.CreateInstance(
                     journeyName,
@@ -638,7 +638,7 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
-                .Returns((JourneyInstance)null);
+                .Returns((JourneyInstance?)null);
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -746,7 +746,7 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(mock => mock.GetInstance(instanceId))
-                .Returns((JourneyInstance)null);
+                .Returns((JourneyInstance?)null);
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -1103,7 +1103,7 @@ namespace FormFlow.Tests
             var stateProvider = new Mock<IUserInstanceStateProvider>();
             stateProvider
                 .Setup(s => s.GetInstance(instanceId))
-                .Returns((JourneyInstance)null);
+                .Returns((JourneyInstance?)null);
 
             var httpContext = new DefaultHttpContext();
             httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -1272,7 +1272,7 @@ namespace FormFlow.Tests
             // Assert
             Assert.True(result);
             Assert.NotNull(instance);
-            Assert.Equal(journeyName, instance.JourneyName);
+            Assert.Equal(journeyName, instance!.JourneyName);
             Assert.Equal(instanceId, instance.InstanceId);
             Assert.Equal(stateType, instance.StateType);
         }
@@ -1341,7 +1341,7 @@ namespace FormFlow.Tests
             // Assert
             Assert.True(result);
             Assert.NotNull(instance);
-            Assert.Equal(journeyName, instance.JourneyName);
+            Assert.Equal(journeyName, instance!.JourneyName);
             Assert.Equal(instanceId, instance.InstanceId);
             Assert.Equal(stateType, instance.StateType);
         }
