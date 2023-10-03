@@ -155,6 +155,12 @@ public class JourneyInstanceProvider
         return CreateInstance(newState, properties);
     }
 
+    public JourneyInstance<TState> GetOrCreateInstance<TState>(IReadOnlyDictionary<object, object>? properties = null)
+        where TState : new()
+    {
+        return GetOrCreateInstance<TState>(() => new TState(), properties);
+    }
+
     public JourneyInstance<TState> GetOrCreateInstance<TState>(
         Func<TState> createState,
         IReadOnlyDictionary<object, object>? properties = null)
