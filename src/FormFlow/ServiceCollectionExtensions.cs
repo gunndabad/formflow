@@ -27,6 +27,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IStateSerializer, JsonStateSerializer>();
         services.TryAddSingleton<IUserInstanceStateProvider, SessionUserInstanceStateProvider>();
         services.AddScoped<MissingInstanceActionFilter>();
+        services.AddOptions<State.JsonOptions>();
 
         var conventions = new FormFlowConventions();
 

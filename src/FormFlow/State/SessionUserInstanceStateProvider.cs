@@ -34,7 +34,7 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
 
         properties ??= PropertiesBuilder.CreateEmpty();
 
-        var serializedState = _stateSerializer.Serialize(state);
+        var serializedState = _stateSerializer.Serialize(stateType, state);
 
         var entry = new SessionEntry()
         {
@@ -77,7 +77,7 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         var session = GetSession();
         var storeKey = GetKeyForInstance(instanceId);
 
-        if (session.TryGetValue(storeKey, out var serialized))
+        if (session.TryGetValue(storeKey, out var _))
         {
             session.Remove(storeKey);
         }
@@ -98,7 +98,7 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         if (session.TryGetValue(storeKey, out var serialized))
         {
             var entry = DeserializeSessionEntry(serialized);
-            var deserializedState = _stateSerializer.Deserialize(entry.State);
+            var deserializedState = _stateSerializer.Deserialize(stateType, entry.State);
 
             return JourneyInstance.Create(
                 this,
@@ -123,7 +123,7 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         if (session.TryGetValue(storeKey, out var serialized))
         {
             var entry = DeserializeSessionEntry(serialized);
-            entry.State = _stateSerializer.Serialize(state);
+            entry.State = _stateSerializer.Serialize(stateType, state);
             SetSessionEntry(instanceId, entry);
         }
         else
