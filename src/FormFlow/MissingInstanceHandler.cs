@@ -3,4 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FormFlow;
 
-public delegate IActionResult MissingInstanceHandler(JourneyDescriptor journeyDescriptor, HttpContext httpContext);
+public delegate IActionResult MissingInstanceHandler(
+    JourneyDescriptor journeyDescriptor,
+    HttpContext httpContext,
+    int? statusCode);

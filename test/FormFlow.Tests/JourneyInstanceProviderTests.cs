@@ -20,31 +20,7 @@ public class JourneyInstanceProviderTests
     public JourneyInstanceProviderTests()
     {
         var options = new FormFlowOptions();
-        new FormFlowOptionsSetup().Configure(options);
         _options = Options.Create(options);
-    }
-
-    [Fact]
-    public void CreateInstance_NoActionContext_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var state = new TestState();
-
-        var stateProvider = new Mock<IUserInstanceStateProvider>();
-
-        var actionContextAccessor = Mock.Of<IActionContextAccessor>();
-
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
-
-        // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
-
-        // Assert
-        Assert.IsType<InvalidOperationException>(ex);
-        Assert.Equal("No active ActionContext.", ex.Message);
     }
 
     [Fact]
@@ -63,19 +39,12 @@ public class JourneyInstanceProviderTests
 
         var actionDescriptor = new ActionDescriptor();
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
+        var ex = Record.Exception(() => instanceProvider.CreateInstance(actionContext, (object)state));
 
         // Act & Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -97,23 +66,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance((object)state));
+        var ex = Record.Exception(() => instanceProvider.CreateInstance(actionContext, (object)state));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -160,27 +124,18 @@ public class JourneyInstanceProviderTests
 
         var routeData = new RouteData(routeValues);
 
+        _options.Value.JourneyRegistry.RegisterJourney(
+            new JourneyDescriptor(journeyName, stateType, requestDataKeys: new[] { "id", "subid" }, appendUniqueKey: false));
+
         var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
-            new JourneyDescriptor(
-                journeyName,
-                stateType,
-                requestDataKeys: new[] { "id", "subid" },
-                appendUniqueKey: false));
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance(state));
+        var ex = Record.Exception(() => instanceProvider.CreateInstance(actionContext, state));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -223,23 +178,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.CreateInstance(state, properties);
+        var result = instanceProvider.CreateInstance(actionContext, state, properties);
 
         // Assert
         stateProvider.Verify();
@@ -270,48 +220,22 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance(state));
+        var ex = Record.Exception(() => instanceProvider.CreateInstance(actionContext, state));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
         Assert.Equal($"{typeof(TestState).FullName} is not compatible with the journey's state type ({typeof(OtherTestState).FullName}).", ex.Message);
-    }
-
-    [Fact]
-    public void GetInstance_NoActionContext_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var stateProvider = new Mock<IUserInstanceStateProvider>();
-
-        var actionContextAccessor = Mock.Of<IActionContextAccessor>();
-
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
-
-        // Act
-        var ex = Record.Exception(() => instanceProvider.GetInstance());
-
-        // Assert
-        Assert.IsType<InvalidOperationException>(ex);
-        Assert.Equal("No active ActionContext.", ex.Message);
     }
 
     [Fact]
@@ -330,19 +254,12 @@ public class JourneyInstanceProviderTests
 
         var actionDescriptor = new ActionDescriptor();
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetInstance());
+        var ex = Record.Exception(() => instanceProvider.GetInstance(actionContext));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -371,23 +288,17 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
+        _options.Value.JourneyRegistry.RegisterJourney(new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
+
         var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
-            new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.GetInstance();
+        var result = instanceProvider.GetInstance(actionContext);
 
         // Assert
         Assert.Null(result);
@@ -422,23 +333,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.GetInstance();
+        var result = instanceProvider.GetInstance(actionContext);
 
         // Assert
         Assert.NotNull(result);
@@ -482,48 +388,22 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetInstance<OtherTestState>());
+        var ex = Record.Exception(() => instanceProvider.GetInstance<OtherTestState>(actionContext));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
         Assert.Equal($"{typeof(OtherTestState).FullName} is not compatible with the journey's state type ({typeof(TestState).FullName}).", ex.Message);
-    }
-
-    [Fact]
-    public void GetOrCreateInstance_NoActionContext_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var stateProvider = new Mock<IUserInstanceStateProvider>();
-
-        var actionContextAccessor = Mock.Of<IActionContextAccessor>();
-
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
-
-        // Act
-        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new TestState()));
-
-        // Assert
-        Assert.IsType<InvalidOperationException>(ex);
-        Assert.Equal("No active ActionContext.", ex.Message);
     }
 
     [Fact]
@@ -536,19 +416,12 @@ public class JourneyInstanceProviderTests
         var routeData = new RouteData();
         var actionDescriptor = new ActionDescriptor();
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new TestState()));
+        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(actionContext, () => new TestState()));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -594,23 +467,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.GetOrCreateInstance(() => new TestState(), properties);
+        var result = instanceProvider.GetOrCreateInstance(actionContext, () => new TestState(), properties);
 
         // Assert
         stateProvider.Verify();
@@ -643,23 +511,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => (object)new OtherTestState()));
+        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(actionContext, () => (object)new OtherTestState()));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -695,25 +558,22 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         var executedStateFactory = false;
 
         // Act
-        var result = instanceProvider.GetOrCreateInstance(() =>
+        var result = instanceProvider.GetOrCreateInstance(
+            actionContext,
+            () =>
             {
                 executedStateFactory = true;
                 return new TestState();
@@ -751,24 +611,19 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
         var ex = Record.Exception(
-            () => instanceProvider.GetOrCreateInstance(() => new OtherTestState()));
+            () => instanceProvider.GetOrCreateInstance(actionContext, () => new OtherTestState()));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -804,23 +659,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(() => new OtherTestState()));
+        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(actionContext, () => new OtherTestState()));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -851,20 +701,15 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         var otherInstanceId = new JourneyInstanceId(
             journeyName,
@@ -874,7 +719,7 @@ public class JourneyInstanceProviderTests
             });
 
         // Act
-        var result = instanceProvider.IsCurrentInstance(otherInstanceId);
+        var result = instanceProvider.IsCurrentInstance(actionContext, otherInstanceId);
 
         // Assert
         Assert.True(result);
@@ -893,25 +738,20 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         var otherInstanceId = new JourneyInstanceId("another-id", new Dictionary<string, StringValues>());
 
         // Act
-        var result = instanceProvider.IsCurrentInstance(otherInstanceId);
+        var result = instanceProvider.IsCurrentInstance(actionContext, otherInstanceId);
 
         // Assert
         Assert.False(result);
@@ -941,25 +781,20 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         var otherInstanceId = new JourneyInstanceId("another-id", new Dictionary<string, StringValues>());
 
         // Act
-        var result = instanceProvider.IsCurrentInstance(otherInstanceId);
+        var result = instanceProvider.IsCurrentInstance(actionContext, otherInstanceId);
 
         // Assert
         Assert.False(result);
@@ -974,19 +809,12 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         var actionDescriptor = new ActionDescriptor();
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.False(result);
@@ -1030,27 +858,22 @@ public class JourneyInstanceProviderTests
 
         var httpContext = new DefaultHttpContext();
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(
                 journeyName,
                 stateType,
                 requestDataKeys: new[] { "id", "subid" },
                 appendUniqueKey: false));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.False(result);
@@ -1068,23 +891,18 @@ public class JourneyInstanceProviderTests
 
         var httpContext = new DefaultHttpContext();
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.False(result);
@@ -1108,23 +926,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.False(result);
@@ -1139,7 +952,7 @@ public class JourneyInstanceProviderTests
         var instanceId = CreateIdWithRandomExtensionOnly(journeyName, out var uniqueKey);
         var stateType = typeof(TestState);
         var state = new TestState();
-        var descriptorJourneyName = "another-name";
+        var otherJourneyName = "another-name";
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
@@ -1156,23 +969,21 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
+        _options.Value.JourneyRegistry.RegisterJourney(
+            new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
+
+        _options.Value.JourneyRegistry.RegisterJourney(
+            new JourneyDescriptor(otherJourneyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
+
         var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
-            new JourneyDescriptor(descriptorJourneyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(otherJourneyName));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.False(result);
@@ -1204,23 +1015,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, descriptorStateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.False(result);
@@ -1251,23 +1057,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.True(result);
@@ -1316,27 +1117,22 @@ public class JourneyInstanceProviderTests
         httpContext.Request.Path = "/foo/42/69";
         httpContext.GetRouteData().Values.AddRange(routeValues);
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(
                 journeyName,
                 stateType,
                 requestDataKeys: new[] { "id", "subid" },
                 appendUniqueKey: false));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.True(result);
@@ -1374,23 +1170,18 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(out var instance);
+        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
 
         // Assert
         Assert.False(result);
@@ -1421,41 +1212,34 @@ public class JourneyInstanceProviderTests
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
 
-        var actionDescriptor = new ActionDescriptor();
-        actionDescriptor.SetProperty(
+        _options.Value.JourneyRegistry.RegisterJourney(
             new JourneyDescriptor(journeyName, stateType, Array.Empty<string>(), appendUniqueKey: true));
 
-        CreateActionContext(
-            httpContext,
-            actionDescriptor,
-            out _,
-            out var actionContextAccessor);
+        var actionDescriptor = new ActionDescriptor();
+        actionDescriptor.SetProperty(new ActionJourneyMetadata(journeyName));
 
-        var instanceProvider = new JourneyInstanceProvider(
-            stateProvider.Object,
-            _options,
-            actionContextAccessor);
+        var actionContext = CreateActionContext(httpContext, actionDescriptor);
+
+        var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        instanceProvider.TryResolveExistingInstance(out var instance1);
-        instanceProvider.TryResolveExistingInstance(out var instance2);
+        instanceProvider.TryResolveExistingInstance(actionContext, out var instance1);
+        instanceProvider.TryResolveExistingInstance(actionContext, out var instance2);
 
         // Assert
         Assert.Same(instance1, instance2);
     }
 
-    private static void CreateActionContext(
+    private static ActionContext CreateActionContext(
         HttpContext httpContext,
-        ActionDescriptor actionDescriptor,
-        out ActionContext actionContext,
-        out IActionContextAccessor actionContextAccessor)
+        ActionDescriptor actionDescriptor)
     {
-        actionContext = new ActionContext(httpContext, httpContext.GetRouteData(), actionDescriptor);
+        var actionContext = new ActionContext(httpContext, httpContext.GetRouteData(), actionDescriptor);
 
         var actionContextAccessorMock = new Mock<IActionContextAccessor>();
         actionContextAccessorMock.SetupGet(mock => mock.ActionContext).Returns(actionContext);
 
-        actionContextAccessor = actionContextAccessorMock.Object;
+        return actionContext;
     }
 
     private static JourneyInstanceId CreateIdWithRandomExtensionOnly(

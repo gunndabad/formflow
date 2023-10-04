@@ -95,11 +95,7 @@ public class MissingInstanceActionFilterTests : MvcTestBase
 [Route("MissingInstanceActionFilterTests/{id}")]
 public class MissingInstanceActionFilterTestsController : Controller
 {
-    [JourneyMetadata(
-        journeyName: "MissingInstanceActionFilterTests",
-        stateType: typeof(MissingInstanceActionFilterTestsState),
-        requestDataKeys: new[] { "id" },
-        appendUniqueKey: false)]
+    [Journey("MissingInstanceActionFilterTests")]
     [RequireJourneyInstance]
     [HttpGet("withattribute")]
     public IActionResult WithAttribute() => Ok();
@@ -108,12 +104,8 @@ public class MissingInstanceActionFilterTestsController : Controller
     [HttpGet("withoutmetadata")]
     public IActionResult WithoutMetadata() => Ok();
 
-    [JourneyMetadata(
-        journeyName: "MissingInstanceActionFilterTests",
-        stateType: typeof(MissingInstanceActionFilterTestsState),
-        requestDataKeys: new[] { "id" },
-        appendUniqueKey: false)]
-    [RequireJourneyInstance(ErrorStatusCode = 400)]
+    [Journey("MissingInstanceActionFilterTests")]
+    [RequireJourneyInstance(errorStatusCode: 400)]
     [HttpGet("withattributeandoverridenstatuscode")]
     public IActionResult WithAttributeAndOverridenStatusCode() => Ok();
 }

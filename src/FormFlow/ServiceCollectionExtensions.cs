@@ -4,10 +4,11 @@ using System.Reflection;
 using FormFlow.Filters;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 namespace FormFlow;
 
@@ -26,11 +27,21 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IStateSerializer, JsonStateSerializer>();
         services.TryAddSingleton<IUserInstanceStateProvider, UserInstanceStateProvider>();
         services.TryAddSingleton<IUserInstanceStateStore, SessionUserInstanceStateStore>();
-        services.AddSingleton<IConfigureOptions<FormFlowOptions>, FormFlowOptionsSetup>();
+        services.AddScoped<MissingInstanceActionFilter>();
+
+        var conventions = new FormFlowConventions();
 
         services.Configure<MvcOptions>(options =>
         {
-            options.Filters.Add(new MissingInstanceActionFilter());
+            options.Conventions.Add((IControllerModelConvention)conventions);
+            options.Conventions.Add((IActionModelConvention)conventions);
+
+            options.Filters.Add(new ServiceFilterAttribute(typeof(MissingInstanceActionFilter)));
+        });
+
+        services.Configure<RazorPagesOptions>(options =>
+        {
+            options.Conventions.Add(conventions);
         });
 
         return services;
@@ -80,14 +91,17 @@ public static class ServiceCollectionExtensions
             services.AddTransient(instanceType, sp =>
             {
                 var instanceProvider = sp.GetRequiredService<JourneyInstanceProvider>();
-                return instanceProvider.GetInstance() ?? throw new InvalidOperationException("No current journey.");
+                var actionContextAccessor = sp.GetRequiredService<IActionContextAccessor>();
+
+                var actionContext = actionContextAccessor.ActionContext ?? throw new InvalidOperationException("No current ActionContext.");
+                return instanceProvider.GetInstance(actionContext) ?? throw new InvalidOperationException("No current journey.");
             });
         }
 
         return services;
     }
 
-    public static IServiceCollection AddFormFlowStateTypes(
+    public static IServiceCollection AddJourneyStateTypes(
         this IServiceCollection services,
         Type fromAssemblyContainingType)
     {

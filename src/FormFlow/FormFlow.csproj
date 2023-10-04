@@ -9,7 +9,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags></PackageTags>
     <MinVerTagPrefix>v</MinVerTagPrefix>
-    <MinVerMinimumMajorMinor>0.4</MinVerMinimumMajorMinor>
+    <MinVerMinimumMajorMinor>0.5</MinVerMinimumMajorMinor>
   </PropertyGroup>
 
   <ItemGroup>

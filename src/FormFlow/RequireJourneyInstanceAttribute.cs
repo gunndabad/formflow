@@ -1,51 +1,23 @@
 using System;
-using FormFlow.Filters;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace FormFlow;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
-public sealed class RequireJourneyInstanceAttribute :
-    Attribute,
-    IActionModelConvention,
-    IControllerModelConvention
+public sealed class RequireJourneyInstanceAttribute : Attribute
 {
-    private int? _errorStatusCode;
-
-    public int ErrorStatusCode
+    public RequireJourneyInstanceAttribute()
     {
-        get
+    }
+
+    public RequireJourneyInstanceAttribute(int errorStatusCode)
+    {
+        if (errorStatusCode < 400 || errorStatusCode > 599)
         {
-            return _errorStatusCode!.Value;  // yuk
+            throw new ArgumentOutOfRangeException(nameof(errorStatusCode));
         }
-        set
-        {
-            if (value < 400 || value > 599)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
 
-            _errorStatusCode = value;
-        }
-    }
+        ErrorStatusCode = errorStatusCode;
 
-    void IActionModelConvention.Apply(ActionModel action)
-    {
-        AddMetadataToAction(action);
     }
-
-    void IControllerModelConvention.Apply(ControllerModel controller)
-    {
-        foreach (var action in controller.Actions)
-        {
-            AddMetadataToAction(action);
-        }
-    }
-
-    private void AddMetadataToAction(ActionModel action)
-    {
-        action.Properties.Add(
-            typeof(RequireInstanceMarker),
-            new RequireInstanceMarker(_errorStatusCode));
-    }
+    public int? ErrorStatusCode { get; }
 }

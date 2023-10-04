@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
 
 namespace FormFlow;
 
@@ -27,14 +25,4 @@ public class JourneyDescriptor
     public IReadOnlyCollection<string> RequestDataKeys { get; }
 
     public Type StateType { get; }
-
-    public static JourneyDescriptor? FromActionContext(ActionContext actionContext)
-    {
-        if (actionContext is null)
-        {
-            throw new ArgumentNullException(nameof(actionContext));
-        }
-
-        return actionContext.ActionDescriptor.GetProperty<JourneyDescriptor>();
-    }
 }

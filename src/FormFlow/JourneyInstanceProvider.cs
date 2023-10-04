@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
 
@@ -13,36 +12,27 @@ namespace FormFlow;
 public class JourneyInstanceProvider
 {
     private readonly IUserInstanceStateProvider _stateProvider;
-    private readonly IList<IValueProviderFactory> _valueProviderFactories;
-    private readonly IActionContextAccessor _actionContextAccessor;
+    private readonly IOptions<FormFlowOptions> _optionsAccessor;
 
     public JourneyInstanceProvider(
         IUserInstanceStateProvider stateProvider,
-        IOptions<FormFlowOptions> optionsAccessor,
-        IActionContextAccessor actionContextAccessor)
+        IOptions<FormFlowOptions> optionsAccessor)
     {
-        _stateProvider = stateProvider ?? throw new ArgumentNullException(nameof(stateProvider));
+        ArgumentNullException.ThrowIfNull(stateProvider);
+        ArgumentNullException.ThrowIfNull(optionsAccessor);
 
-        if (optionsAccessor == null)
-        {
-            throw new ArgumentNullException(nameof(optionsAccessor));
-        }
-
-        _valueProviderFactories = optionsAccessor.Value.ValueProviderFactories;
-
-        _actionContextAccessor = actionContextAccessor ?? throw new ArgumentNullException(nameof(actionContextAccessor));
+        _stateProvider = stateProvider;
+        _optionsAccessor = optionsAccessor;
     }
 
     public JourneyInstance CreateInstance(
+        ActionContext actionContext,
         object state,
         IReadOnlyDictionary<object, object>? properties = null)
     {
-        if (state == null)
-        {
-            throw new ArgumentNullException(nameof(state));
-        }
+        ArgumentNullException.ThrowIfNull(actionContext);
+        ArgumentNullException.ThrowIfNull(state);
 
-        var actionContext = ResolveActionContext();
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
         ThrowIfStateTypeIncompatible(state.GetType(), journeyDescriptor);
@@ -67,15 +57,13 @@ public class JourneyInstanceProvider
     }
 
     public JourneyInstance<TState> CreateInstance<TState>(
+        ActionContext actionContext,
         TState state,
         IReadOnlyDictionary<object, object>? properties = null)
     {
-        if (state == null)
-        {
-            throw new ArgumentNullException(nameof(state));
-        }
+        ArgumentNullException.ThrowIfNull(actionContext);
+        ArgumentNullException.ThrowIfNull(state);
 
-        var actionContext = ResolveActionContext();
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
         ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
@@ -99,12 +87,14 @@ public class JourneyInstanceProvider
             properties);
     }
 
-    public JourneyInstance? GetInstance()
+    public JourneyInstance? GetInstance(ActionContext actionContext)
     {
-        // Throw if ActionContext or JourneyDescriptor are missing
-        ResolveJourneyDescriptor(ResolveActionContext());
+        ArgumentNullException.ThrowIfNull(actionContext);
 
-        if (TryResolveExistingInstance(out var instance))
+        // Throw if JourneyDescriptor is missing
+        ResolveJourneyDescriptor(actionContext);
+
+        if (TryResolveExistingInstance(actionContext, out var instance))
         {
             return instance;
         }
@@ -114,12 +104,14 @@ public class JourneyInstanceProvider
         }
     }
 
-    public JourneyInstance<TState>? GetInstance<TState>()
+    public JourneyInstance<TState>? GetInstance<TState>(ActionContext actionContext)
     {
-        // Throw if ActionContext or JourneyDescriptor are missing
-        ResolveJourneyDescriptor(ResolveActionContext());
+        ArgumentNullException.ThrowIfNull(actionContext);
 
-        if (TryResolveExistingInstance(out var instance))
+        // Throw if JourneyDescriptor is missing
+        ResolveJourneyDescriptor(actionContext);
+
+        if (TryResolveExistingInstance(actionContext, out var instance))
         {
             ThrowIfStateTypeIncompatible(typeof(TState), instance.StateType);
 
@@ -132,18 +124,16 @@ public class JourneyInstanceProvider
     }
 
     public JourneyInstance GetOrCreateInstance(
+        ActionContext actionContext,
         Func<object> createState,
         IReadOnlyDictionary<object, object>? properties = null)
     {
-        if (createState == null)
-        {
-            throw new ArgumentNullException(nameof(createState));
-        }
+        ArgumentNullException.ThrowIfNull(actionContext);
+        ArgumentNullException.ThrowIfNull(createState);
 
-        var actionContext = ResolveActionContext();
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
-        if (TryResolveExistingInstance(out var instance))
+        if (TryResolveExistingInstance(actionContext, out var instance))
         {
             return instance;
         }
@@ -152,52 +142,50 @@ public class JourneyInstanceProvider
 
         ThrowIfStateTypeIncompatible(newState.GetType(), journeyDescriptor);
 
-        return CreateInstance(newState, properties);
-    }
-
-    public JourneyInstance<TState> GetOrCreateInstance<TState>(IReadOnlyDictionary<object, object>? properties = null)
-        where TState : new()
-    {
-        return GetOrCreateInstance<TState>(() => new TState(), properties);
+        return CreateInstance(actionContext, newState, properties);
     }
 
     public JourneyInstance<TState> GetOrCreateInstance<TState>(
+        ActionContext actionContext,
+        IReadOnlyDictionary<object, object>? properties = null)
+        where TState : new()
+    {
+        return GetOrCreateInstance<TState>(actionContext, () => new TState(), properties);
+    }
+
+    public JourneyInstance<TState> GetOrCreateInstance<TState>(
+        ActionContext actionContext,
         Func<TState> createState,
         IReadOnlyDictionary<object, object>? properties = null)
     {
-        if (createState == null)
-        {
-            throw new ArgumentNullException(nameof(createState));
-        }
+        ArgumentNullException.ThrowIfNull(actionContext);
+        ArgumentNullException.ThrowIfNull(createState);
 
-        var actionContext = ResolveActionContext();
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
         ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
 
-        if (TryResolveExistingInstance(out var instance))
+        if (TryResolveExistingInstance(actionContext, out var instance))
         {
             return (JourneyInstance<TState>)instance;
         }
 
         var newState = createState();
 
-        return CreateInstance(newState, properties);
+        return CreateInstance(actionContext, newState, properties);
     }
 
     public async Task<JourneyInstance> GetOrCreateInstanceAsync(
+        ActionContext actionContext,
         Func<Task<object>> createState,
         IReadOnlyDictionary<object, object>? properties = null)
     {
-        if (createState == null)
-        {
-            throw new ArgumentNullException(nameof(createState));
-        }
+        ArgumentNullException.ThrowIfNull(actionContext);
+        ArgumentNullException.ThrowIfNull(createState);
 
-        var actionContext = ResolveActionContext();
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
-        if (TryResolveExistingInstance(out var instance))
+        if (TryResolveExistingInstance(actionContext, out var instance))
         {
             return instance;
         }
@@ -206,55 +194,78 @@ public class JourneyInstanceProvider
 
         ThrowIfStateTypeIncompatible(newState.GetType(), journeyDescriptor);
 
-        return CreateInstance(newState, properties);
+        return CreateInstance(actionContext, newState, properties);
     }
 
     public async Task<JourneyInstance<TState>> GetOrCreateInstanceAsync<TState>(
+        ActionContext actionContext,
         Func<Task<TState>> createState,
         IReadOnlyDictionary<object, object>? properties = null)
     {
-        if (createState == null)
-        {
-            throw new ArgumentNullException(nameof(createState));
-        }
+        ArgumentNullException.ThrowIfNull(actionContext);
+        ArgumentNullException.ThrowIfNull(createState);
 
-        var actionContext = ResolveActionContext();
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
         ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
 
-        if (TryResolveExistingInstance(out var instance))
+        if (TryResolveExistingInstance(actionContext, out var instance))
         {
             return (JourneyInstance<TState>)instance;
         }
 
         var newState = await createState();
 
-        return CreateInstance(newState, properties);
+        return CreateInstance(actionContext, newState, properties);
     }
 
-    public bool IsCurrentInstance(JourneyInstance instance)
+    public bool IsCurrentInstance(ActionContext actionContext, JourneyInstance instance)
     {
-        if (instance == null)
-        {
-            throw new ArgumentNullException(nameof(instance));
-        }
+        ArgumentNullException.ThrowIfNull(actionContext);
+        ArgumentNullException.ThrowIfNull(instance);
 
-        return IsCurrentInstance(instance.InstanceId);
+        return IsCurrentInstance(actionContext, instance.InstanceId);
     }
 
-    public bool IsCurrentInstance(JourneyInstanceId instanceId)
+    public bool IsCurrentInstance(ActionContext actionContext, JourneyInstanceId instanceId)
     {
-        TryResolveExistingInstance(out var currentInstance);
+        ArgumentNullException.ThrowIfNull(actionContext);
 
+        TryResolveExistingInstance(actionContext, out var currentInstance);
         return currentInstance?.InstanceId == instanceId;
     }
 
-    internal bool TryResolveExistingInstance([MaybeNullWhen(false)] out JourneyInstance instance)
+    internal JourneyDescriptor? ResolveJourneyDescriptor(
+        ActionContext actionContext,
+        bool throwIfNotFound = true)
     {
-        instance = default;
+        var actionJourneyMetadata = actionContext.GetActionJourneyMetadata();
+        if (actionJourneyMetadata == null)
+        {
+            if (throwIfNotFound)
+            {
+                throw new InvalidOperationException("No journey metadata found on action.");
+            }
+            else
+            {
+                return null;
+            }
+        }
 
-        var actionContext = ResolveActionContext();
+        var journeyDescriptor = _optionsAccessor.Value.JourneyRegistry.GetJourneyByName(actionJourneyMetadata.JourneyName);
+        if (journeyDescriptor is null)
+        {
+            throw new InvalidOperationException($"No journey named '{actionJourneyMetadata.JourneyName}' found in JourneyRegistry.");
+        }
+
+        return journeyDescriptor;
+    }
+
+    internal bool TryResolveExistingInstance(ActionContext actionContext, [MaybeNullWhen(false)] out JourneyInstance instance)
+    {
+        ArgumentNullException.ThrowIfNull(actionContext);
+
+        instance = default;
 
         // If we've already created a JourneyInstance for this request, use that
         if (actionContext.HttpContext.Items.TryGetValue(typeof(JourneyInstance), out var existingInstanceObj) && existingInstanceObj is not null)
@@ -332,7 +343,7 @@ public class JourneyInstanceProvider
 
         var valueProviders = new List<IValueProvider>();
 
-        foreach (var valueProviderFactory in _valueProviderFactories)
+        foreach (var valueProviderFactory in _optionsAccessor.Value.ValueProviderFactories)
         {
             var ctx = new ValueProviderFactoryContext(actionContext);
 
@@ -352,31 +363,17 @@ public class JourneyInstanceProvider
         return valueProvider;
     }
 
-    private ActionContext ResolveActionContext()
-    {
-        var actionContext = _actionContextAccessor.ActionContext;
+    //private ActionContext ResolveActionContext()
+    //{
+    //    var actionContext = _actionContextAccessor.ActionContext;
 
-        if (actionContext == null)
-        {
-            throw new InvalidOperationException("No active ActionContext.");
-        }
+    //    if (actionContext == null)
+    //    {
+    //        throw new InvalidOperationException("No active ActionContext.");
+    //    }
 
-        return actionContext;
-    }
-
-    private JourneyDescriptor? ResolveJourneyDescriptor(
-        ActionContext actionContext,
-        bool throwIfNotFound = true)
-    {
-        var descriptor = JourneyDescriptor.FromActionContext(actionContext);
-
-        if (descriptor == null && throwIfNotFound)
-        {
-            throw new InvalidOperationException("No journey metadata found on action.");
-        }
-
-        return descriptor;
-    }
+    //    return actionContext;
+    //}
 
     private class ValueProviderCacheEntry
     {

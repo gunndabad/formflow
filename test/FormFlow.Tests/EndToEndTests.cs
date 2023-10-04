@@ -184,11 +184,7 @@ public class EndToEndTests : MvcTestBase
 }
 
 [Route("E2ETests/{id}/{subid}")]
-[JourneyMetadata(
-    journeyName: "E2ETests",
-    stateType: typeof(E2ETestsState),
-    requestDataKeys: new[] { "id", "subid" },
-    appendUniqueKey: true)]
+[Journey("E2ETests")]
 public class E2ETestsController : Controller
 {
     private readonly JourneyInstanceProvider _journeyInstanceProvider;
@@ -238,10 +234,11 @@ public class E2ETestsController : Controller
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         _journeyInstance = _journeyInstanceProvider.GetOrCreateInstance(
+            context,
             E2ETestsState.CreateInitialState,
             properties: new PropertiesBuilder().Add("bar", 42).Add("baz", "wwww").Build());
 
-        if (!_journeyInstanceProvider.IsCurrentInstance(_journeyInstance))
+        if (!_journeyInstanceProvider.IsCurrentInstance(context, _journeyInstance))
         {
             context.Result = RedirectToAction()
                 .WithJourneyInstanceUniqueKey(_journeyInstance);

@@ -27,7 +27,20 @@ public sealed class MvcTestFixture : IDisposable
                             .AddMvc()
                             .AddNewtonsoftJson();
 
-                        services.AddFormFlow();
+                        services.AddFormFlow(options =>
+                        {
+                            options.JourneyRegistry.RegisterJourney(new JourneyDescriptor(
+                                journeyName: "MissingInstanceActionFilterTests",
+                                stateType: typeof(MissingInstanceActionFilterTestsState),
+                                requestDataKeys: new[] { "id" },
+                                appendUniqueKey: false));
+
+                            options.JourneyRegistry.RegisterJourney(new JourneyDescriptor(
+                                journeyName: "E2ETests",
+                                stateType: typeof(E2ETestsState),
+                                requestDataKeys: new[] { "id", "subid" },
+                                appendUniqueKey: true));
+                        });
 
                         services.AddSingleton<IUserInstanceStateProvider, InMemoryInstanceStateProvider>();
                     })

@@ -2,39 +2,48 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace FormFlow.Filters;
 
-public class MissingInstanceActionFilter : IActionFilter
+public class MissingInstanceActionFilter : IActionFilter, IPageFilter
 {
+    private readonly IOptions<FormFlowOptions> _optionsAccessor;
+    private readonly JourneyInstanceProvider _journeyInstanceProvider;
+
+    public MissingInstanceActionFilter(IOptions<FormFlowOptions> optionsAccessor, JourneyInstanceProvider journeyInstanceProvider)
+    {
+        _optionsAccessor = optionsAccessor;
+        _journeyInstanceProvider = journeyInstanceProvider;
+    }
+
     public void OnActionExecuted(ActionExecutedContext context)
     {
     }
 
-    public void OnActionExecuting(ActionExecutingContext context)
+    public void OnActionExecuting(ActionExecutingContext context) => CheckInstance(context, result => context.Result = result);
+
+    public void OnPageHandlerExecuted(PageHandlerExecutedContext context)
     {
-        var options = context.HttpContext.RequestServices.GetRequiredService<IOptions<FormFlowOptions>>().Value;
+    }
 
-        var requireInstanceMarker = context.ActionDescriptor.GetProperty<RequireInstanceMarker>();
+    public void OnPageHandlerExecuting(PageHandlerExecutingContext context) => CheckInstance(context, result => context.Result = result);
 
-        if (requireInstanceMarker != null)
+    public void OnPageHandlerSelected(PageHandlerSelectedContext context)
+    {
+    }
+
+    private void CheckInstance(ActionContext actionContext, Action<IActionResult> assignResult)
+    {
+        var requireInstanceMarker = actionContext.ActionDescriptor.GetProperty<RequireInstanceMarker>();
+
+        if (requireInstanceMarker is not null)
         {
-            var journeyDescriptor = JourneyDescriptor.FromActionContext(context);
-            if (journeyDescriptor == null)
+            if (!_journeyInstanceProvider.TryResolveExistingInstance(actionContext, out _))
             {
-                throw new InvalidOperationException("No journey metadata found on action.");
-            }
+                var journeyDescriptor = _journeyInstanceProvider.ResolveJourneyDescriptor(actionContext, throwIfNotFound: true)!;
 
-            var instanceProvider =
-                context.HttpContext.RequestServices.GetRequiredService<JourneyInstanceProvider>();
-
-            if (instanceProvider.GetInstance() == null)
-            {
-                context.Result = requireInstanceMarker.ErrorStatusCode.HasValue ?
-                    new StatusCodeResult(requireInstanceMarker.ErrorStatusCode.Value) :
-                    options.MissingInstanceHandler(journeyDescriptor, context.HttpContext);
+                assignResult(_optionsAccessor.Value.MissingInstanceHandler(journeyDescriptor, actionContext.HttpContext, requireInstanceMarker.ErrorStatusCode));
             }
         }
     }
