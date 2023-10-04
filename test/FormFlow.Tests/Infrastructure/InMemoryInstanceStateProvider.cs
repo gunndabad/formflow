@@ -41,17 +41,17 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
         return instance;
     }
 
-    public void CompleteInstance(JourneyInstanceId instanceId)
+    public void CompleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         _instances[instanceId].Completed = true;
     }
 
-    public void DeleteInstance(JourneyInstanceId instanceId)
+    public void DeleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         _instances.Remove(instanceId);
     }
 
-    public JourneyInstance? GetInstance(JourneyInstanceId instanceId)
+    public JourneyInstance? GetInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         _instances.TryGetValue(instanceId, out var entry);
 
@@ -62,7 +62,7 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
         return instance;
     }
 
-    public void UpdateInstanceState(JourneyInstanceId instanceId, object state)
+    public void UpdateInstanceState(string journeyName, JourneyInstanceId instanceId, Type stateType, object state)
     {
         _instances[instanceId].State = state;
     }

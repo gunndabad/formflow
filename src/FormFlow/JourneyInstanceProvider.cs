@@ -43,7 +43,7 @@ public class JourneyInstanceProvider
             journeyDescriptor,
             valueProvider);
 
-        if (_stateProvider.GetInstance(instanceId) != null)
+        if (_stateProvider.GetInstance(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType) != null)
         {
             throw new InvalidOperationException("Instance already exists with this ID.");
         }
@@ -74,7 +74,7 @@ public class JourneyInstanceProvider
             journeyDescriptor,
             valueProvider);
 
-        if (_stateProvider.GetInstance(instanceId) != null)
+        if (_stateProvider.GetInstance(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType) != null)
         {
             throw new InvalidOperationException("Instance already exists with this ID.");
         }
@@ -291,7 +291,7 @@ public class JourneyInstanceProvider
             return false;
         }
 
-        var persistedInstance = _stateProvider.GetInstance(instanceId);
+        var persistedInstance = _stateProvider.GetInstance(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType);
         if (persistedInstance == null)
         {
             return false;

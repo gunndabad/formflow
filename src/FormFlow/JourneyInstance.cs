@@ -73,7 +73,7 @@ public class JourneyInstance
             throw new InvalidOperationException("Instance has been deleted.");
         }
 
-        _stateProvider.CompleteInstance(InstanceId);
+        _stateProvider.CompleteInstance(JourneyName, InstanceId, StateType);
         Completed = true;
     }
 
@@ -84,7 +84,7 @@ public class JourneyInstance
             return;
         }
 
-        _stateProvider.DeleteInstance(InstanceId);
+        _stateProvider.DeleteInstance(JourneyName, InstanceId, StateType);
         Deleted = true;
     }
 
@@ -121,7 +121,7 @@ public class JourneyInstance
             throw new InvalidOperationException("Instance has been deleted.");
         }
 
-        _stateProvider.UpdateInstanceState(InstanceId, state);
+        _stateProvider.UpdateInstanceState(JourneyName, InstanceId, StateType, state);
         State = state;
     }
 }

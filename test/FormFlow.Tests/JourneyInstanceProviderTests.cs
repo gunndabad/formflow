@@ -109,7 +109,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -282,7 +282,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(instanceId))
+            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
             .Returns((JourneyInstance?)null);
 
         var httpContext = new DefaultHttpContext();
@@ -320,7 +320,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(instanceId))
+            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -375,7 +375,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(instanceId))
+            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -444,7 +444,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(instanceId))
+            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
             .Returns((JourneyInstance?)null);
         stateProvider
             .Setup(mock => mock.CreateInstance(
@@ -505,7 +505,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(instanceId))
+            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
             .Returns((JourneyInstance?)null);
 
         var httpContext = new DefaultHttpContext();
@@ -545,7 +545,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(instanceId))
+            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -605,7 +605,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(instanceId))
+            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
             .Returns((JourneyInstance?)null);
 
         var httpContext = new DefaultHttpContext();
@@ -646,7 +646,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(instanceId))
+            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -688,7 +688,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -768,7 +768,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -846,7 +846,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -920,7 +920,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns((JourneyInstance?)null);
 
         var httpContext = new DefaultHttpContext();
@@ -956,7 +956,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -1002,7 +1002,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -1044,7 +1044,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -1103,7 +1103,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(
                 JourneyInstance.Create(
                     stateProvider.Object,
@@ -1153,7 +1153,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(() =>
             {
                 var instance = JourneyInstance.Create(
@@ -1199,7 +1199,7 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(instanceId))
+            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
             .Returns(() =>
                 JourneyInstance.Create(
                     stateProvider.Object,

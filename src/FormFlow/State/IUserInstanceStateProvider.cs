@@ -5,7 +5,7 @@ namespace FormFlow.State;
 
 public interface IUserInstanceStateProvider
 {
-    void CompleteInstance(JourneyInstanceId instanceId);
+    void CompleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType);
 
     JourneyInstance CreateInstance(
         string journeyName,
@@ -14,9 +14,9 @@ public interface IUserInstanceStateProvider
         object state,
         IReadOnlyDictionary<object, object>? properties);
 
-    void DeleteInstance(JourneyInstanceId instanceId);
+    void DeleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType);
 
-    JourneyInstance? GetInstance(JourneyInstanceId instanceId);
+    JourneyInstance? GetInstance(string journeyName, JourneyInstanceId instanceId, Type stateType);
 
-    void UpdateInstanceState(JourneyInstanceId instanceId, object state);
+    void UpdateInstanceState(string journeyName, JourneyInstanceId instanceId, Type stateType, object state);
 }

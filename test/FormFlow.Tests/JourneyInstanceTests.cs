@@ -17,11 +17,14 @@ public class JourneyInstanceTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
 
+        var journeyName = "journey";
+        var stateType = typeof(MyState);
+
         var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
             stateProvider.Object,
-            "key",
+            journeyName,
             instanceId,
-            typeof(MyState),
+            stateType,
             new MyState(),
             properties: new Dictionary<object, object>());
 
@@ -31,7 +34,7 @@ public class JourneyInstanceTests
         instance.Complete();
 
         // Assert
-        stateProvider.Verify(mock => mock.CompleteInstance(instanceId));
+        stateProvider.Verify(mock => mock.CompleteInstance(journeyName, instanceId, stateType));
     }
 
     [Fact]
@@ -42,11 +45,14 @@ public class JourneyInstanceTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
 
+        var journeyName = "journey";
+        var stateType = typeof(MyState);
+
         var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
             stateProvider.Object,
-            "key",
+            journeyName,
             instanceId,
-            typeof(MyState),
+            stateType,
             new MyState(),
             properties: new Dictionary<object, object>());
 
@@ -66,11 +72,14 @@ public class JourneyInstanceTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
 
+        var journeyName = "journey";
+        var stateType = typeof(MyState);
+
         var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
             stateProvider.Object,
-            "key",
+            journeyName,
             instanceId,
-            typeof(MyState),
+            stateType,
             new MyState(),
             properties: new Dictionary<object, object>());
 
@@ -80,7 +89,7 @@ public class JourneyInstanceTests
         instance.UpdateState(newState);
 
         // Assert
-        stateProvider.Verify(mock => mock.UpdateInstanceState(instanceId, newState));
+        stateProvider.Verify(mock => mock.UpdateInstanceState(journeyName, instanceId, stateType, newState));
         Assert.Same(newState, instance.State);
     }
 
