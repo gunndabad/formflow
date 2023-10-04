@@ -26,8 +26,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<JourneyInstanceProvider>();
         services.TryAddSingleton<IStateSerializer, JsonStateSerializer>();
         services.TryAddSingleton<IUserInstanceStateProvider, SessionUserInstanceStateProvider>();
-        services.AddScoped<MissingInstanceActionFilter>();
         services.AddOptions<State.JsonOptions>();
+        services.AddScoped<MissingInstanceFilter>();
+        services.AddScoped<ActivateInstanceFilter>();
 
         var conventions = new FormFlowConventions();
 
@@ -36,7 +37,8 @@ public static class ServiceCollectionExtensions
             options.Conventions.Add((IControllerModelConvention)conventions);
             options.Conventions.Add((IActionModelConvention)conventions);
 
-            options.Filters.Add(new ServiceFilterAttribute(typeof(MissingInstanceActionFilter)));
+            options.Filters.Add(new ServiceFilterAttribute(typeof(MissingInstanceFilter)));
+            options.Filters.Add(new ServiceFilterAttribute(typeof(ActivateInstanceFilter)));
         });
 
         services.Configure<RazorPagesOptions>(options =>
