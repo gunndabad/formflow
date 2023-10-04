@@ -1,22 +1,23 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace FormFlow.State;
 
 public interface IUserInstanceStateProvider
 {
-    void CompleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType);
+    Task CompleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType);
 
-    JourneyInstance CreateInstance(
+    Task<JourneyInstance> CreateInstanceAsync(
         string journeyName,
         JourneyInstanceId instanceId,
         Type stateType,
         object state,
         IReadOnlyDictionary<object, object>? properties);
 
-    void DeleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType);
+    Task DeleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType);
 
-    JourneyInstance? GetInstance(string journeyName, JourneyInstanceId instanceId, Type stateType);
+    Task<JourneyInstance?> GetInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType);
 
-    void UpdateInstanceState(string journeyName, JourneyInstanceId instanceId, Type stateType, object state);
+    Task UpdateInstanceStateAsync(string journeyName, JourneyInstanceId instanceId, Type stateType, object state);
 }

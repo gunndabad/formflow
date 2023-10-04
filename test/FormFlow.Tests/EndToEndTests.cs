@@ -24,7 +24,7 @@ public class EndToEndTests : MvcTestBase
     public async Task ReadState_ReturnsStateAndProperties()
     {
         // Arrange
-        var instance = StateProvider.CreateInstance(
+        var instance = await StateProvider.CreateInstanceAsync(
             journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
@@ -40,7 +40,7 @@ public class EndToEndTests : MvcTestBase
     public async Task UpdateState_UpdatesStateAndRedirects()
     {
         // Arrange
-        var instance = StateProvider.CreateInstance(
+        var instance = await StateProvider.CreateInstanceAsync(
             journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
@@ -55,7 +55,7 @@ public class EndToEndTests : MvcTestBase
     public async Task Complete_DoesNotAllowStateToBeUpdatedSubsequently()
     {
         // Arrange
-        var instance = StateProvider.CreateInstance(
+        var instance = await StateProvider.CreateInstanceAsync(
             journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
@@ -81,7 +81,7 @@ public class EndToEndTests : MvcTestBase
     public async Task Complete_DoesAllowStateToBeReadSubsequently()
     {
         // Arrange
-        var instance = StateProvider.CreateInstance(
+        var instance = await StateProvider.CreateInstanceAsync(
             journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
@@ -107,7 +107,7 @@ public class EndToEndTests : MvcTestBase
     public async Task Delete_ReturnsOk()
     {
         // Arrange
-        var instance = StateProvider.CreateInstance(
+        var instance = await StateProvider.CreateInstanceAsync(
             journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
@@ -208,32 +208,32 @@ public class E2ETestsController : Controller
 
     [HttpPost("UpdateState")]
     [RequireJourneyInstance]
-    public IActionResult UpdateState(string newValue, string id, string subid)
+    public async Task<IActionResult> UpdateState(string newValue, string id, string subid)
     {
-        _journeyInstance!.UpdateState(state => state.Value = newValue);
+        await _journeyInstance!.UpdateStateAsync(state => state.Value = newValue);
         return RedirectToAction(nameof(ReadState), new { id, subid })
             .WithJourneyInstanceUniqueKey(_journeyInstance);
     }
 
     [HttpPost("Complete")]
     [RequireJourneyInstance]
-    public IActionResult Complete()
+    public async Task<IActionResult> Complete()
     {
-        _journeyInstance!.Complete();
+        await _journeyInstance!.CompleteAsync();
         return Ok();
     }
 
     [HttpPost("Delete")]
     [RequireJourneyInstance]
-    public IActionResult Delete()
+    public async Task<IActionResult> Delete()
     {
-        _journeyInstance!.Delete();
+        await _journeyInstance!.DeleteAsync();
         return Ok();
     }
 
-    public override void OnActionExecuting(ActionExecutingContext context)
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        _journeyInstance = _journeyInstanceProvider.GetOrCreateInstance(
+        _journeyInstance = await _journeyInstanceProvider.GetOrCreateInstanceAsync(
             context,
             E2ETestsState.CreateInitialState,
             properties: new PropertiesBuilder().Add("bar", 42).Add("baz", "wwww").Build());
@@ -242,7 +242,10 @@ public class E2ETestsController : Controller
         {
             context.Result = RedirectToAction()
                 .WithJourneyInstanceUniqueKey(_journeyInstance);
+            return;
         }
+
+        await base.OnActionExecutionAsync(context, next);
     }
 }
 

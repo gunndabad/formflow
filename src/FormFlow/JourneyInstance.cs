@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FormFlow.State;
 
 namespace FormFlow;
@@ -61,7 +62,7 @@ public class JourneyInstance
             completed)!;
     }
 
-    public void Complete()
+    public async Task CompleteAsync()
     {
         if (Completed)
         {
@@ -73,18 +74,18 @@ public class JourneyInstance
             throw new InvalidOperationException("Instance has been deleted.");
         }
 
-        _stateProvider.CompleteInstance(JourneyName, InstanceId, StateType);
+        await _stateProvider.CompleteInstanceAsync(JourneyName, InstanceId, StateType);
         Completed = true;
     }
 
-    public void Delete()
+    public async Task DeleteAsync()
     {
         if (Deleted)
         {
             return;
         }
 
-        _stateProvider.DeleteInstance(JourneyName, InstanceId, StateType);
+        await _stateProvider.DeleteInstanceAsync(JourneyName, InstanceId, StateType);
         Deleted = true;
     }
 
@@ -99,7 +100,7 @@ public class JourneyInstance
             (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(JourneyInstance<>));
     }
 
-    protected void UpdateState(object state)
+    protected async Task UpdateStateAsync(object state)
     {
         if (state == null)
         {
@@ -121,7 +122,7 @@ public class JourneyInstance
             throw new InvalidOperationException("Instance has been deleted.");
         }
 
-        _stateProvider.UpdateInstanceState(JourneyName, InstanceId, StateType, state);
+        await _stateProvider.UpdateInstanceStateAsync(JourneyName, InstanceId, StateType, state);
         State = state;
     }
 }
@@ -141,23 +142,23 @@ public sealed class JourneyInstance<TState> : JourneyInstance
 
     public new TState State => (TState)base.State;
 
-    public void UpdateState(TState state)
+    public async Task UpdateStateAsync(TState state)
     {
         if (state == null)
         {
             throw new ArgumentNullException(nameof(state));
         }
 
-        UpdateState((object)state);
+        await UpdateStateAsync((object)state);
     }
 
-    public void UpdateState(Action<TState> update)
+    public async Task UpdateStateAsync(Action<TState> update)
     {
         update(State);
-        UpdateState(State);
+        await UpdateStateAsync(State);
     }
 
-    public void UpdateState(Func<TState, TState> update)
+    public async Task UpdateStateAsync(Func<TState, TState> update)
     {
         if (update == null)
         {
@@ -165,6 +166,6 @@ public sealed class JourneyInstance<TState> : JourneyInstance
         }
 
         var newState = update(State);
-        UpdateState(newState);
+        await UpdateStateAsync(newState);
     }
 }

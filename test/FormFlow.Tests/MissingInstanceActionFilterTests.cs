@@ -54,7 +54,7 @@ public class MissingInstanceActionFilterTests : MvcTestBase
     public async Task RequireJourneyInstanceSpecifiedWithActiveInstance_ReturnsOk()
     {
         // Arrange
-        CreateInstance(
+        await CreateInstanceAsync(
             journeyName: "MissingInstanceActionFilterTests",
             keys: new Dictionary<string, StringValues>()
             {

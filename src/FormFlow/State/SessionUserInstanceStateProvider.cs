@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace FormFlow.State;
@@ -21,7 +22,7 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public JourneyInstance CreateInstance(
+    public Task<JourneyInstance> CreateInstanceAsync(
         string journeyName,
         JourneyInstanceId instanceId,
         Type stateType,
@@ -46,10 +47,10 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
 
         SetSessionEntry(instanceId, entry);
 
-        return JourneyInstance.Create(this, journeyName, instanceId, stateType, state, properties);
+        return Task.FromResult(JourneyInstance.Create(this, journeyName, instanceId, stateType, state, properties));
     }
 
-    public void CompleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task CompleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         ArgumentNullException.ThrowIfNull(journeyName);
         ArgumentNullException.ThrowIfNull(stateType);
@@ -67,9 +68,11 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         {
             throw new ArgumentException("Instance does not exist.", nameof(instanceId));
         }
+
+        return Task.CompletedTask;
     }
 
-    public void DeleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task DeleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         ArgumentNullException.ThrowIfNull(journeyName);
         ArgumentNullException.ThrowIfNull(stateType);
@@ -85,9 +88,11 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         {
             throw new ArgumentException("Instance does not exist.", nameof(instanceId));
         }
+
+        return Task.CompletedTask;
     }
 
-    public JourneyInstance? GetInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task<JourneyInstance?> GetInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         ArgumentNullException.ThrowIfNull(journeyName);
         ArgumentNullException.ThrowIfNull(stateType);
@@ -100,22 +105,22 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
             var entry = DeserializeSessionEntry(serialized);
             var deserializedState = _stateSerializer.Deserialize(stateType, entry.State);
 
-            return JourneyInstance.Create(
+            return Task.FromResult((JourneyInstance?)JourneyInstance.Create(
                 this,
                 entry.JourneyName,
                 instanceId,
                 stateType,
                 deserializedState,
                 entry.Properties,
-                entry.Completed);
+                entry.Completed));
         }
         else
         {
-            return null;
+            return Task.FromResult((JourneyInstance?)null);
         }
     }
 
-    public void UpdateInstanceState(string journeyName, JourneyInstanceId instanceId, Type stateType, object state)
+    public Task UpdateInstanceStateAsync(string journeyName, JourneyInstanceId instanceId, Type stateType, object state)
     {
         var session = GetSession();
         var storeKey = GetKeyForInstance(instanceId);
@@ -130,6 +135,8 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         {
             throw new ArgumentException("Instance does not exist.", nameof(instanceId));
         }
+
+        return Task.CompletedTask;
     }
 
     private ISession GetSession()

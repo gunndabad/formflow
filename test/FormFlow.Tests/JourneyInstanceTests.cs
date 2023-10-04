@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FormFlow.State;
 using Microsoft.Extensions.Primitives;
 using Moq;
@@ -10,7 +11,7 @@ namespace FormFlow.Tests;
 public class JourneyInstanceTests
 {
     [Fact]
-    public void Delete_CallsDeleteOnStateProvider()
+    public async Task DeleteAsync_CallsDeleteOnStateProvider()
     {
         // Arrange
         var instanceId = new JourneyInstanceId("instance", new Dictionary<string, StringValues>());
@@ -31,14 +32,14 @@ public class JourneyInstanceTests
         var newState = new MyState();
 
         // Act
-        instance.Complete();
+        await instance.DeleteAsync();
 
         // Assert
-        stateProvider.Verify(mock => mock.CompleteInstance(journeyName, instanceId, stateType));
+        stateProvider.Verify(mock => mock.DeleteInstanceAsync(journeyName, instanceId, stateType));
     }
 
     [Fact]
-    public void UpdateState_DeletedInstance_ThrowsInvalidOperationException()
+    public async Task CompleteAsync_CallsDeleteOnStateProvider()
     {
         // Arrange
         var instanceId = new JourneyInstanceId("instance", new Dictionary<string, StringValues>());
@@ -58,14 +59,45 @@ public class JourneyInstanceTests
 
         var newState = new MyState();
 
-        instance.Complete();
+        // Act
+        await instance.CompleteAsync();
+
+        // Assert
+        stateProvider.Verify(mock => mock.CompleteInstanceAsync(journeyName, instanceId, stateType));
+    }
+
+    [Fact]
+    public async Task UpdateStateAsync_DeletedInstance_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var instanceId = new JourneyInstanceId("instance", new Dictionary<string, StringValues>());
+
+        var stateProvider = new Mock<IUserInstanceStateProvider>();
+
+        var journeyName = "journey";
+        var stateType = typeof(MyState);
+
+        var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
+            stateProvider.Object,
+            journeyName,
+            instanceId,
+            stateType,
+            new MyState(),
+            properties: new Dictionary<object, object>());
+
+        var newState = new MyState();
+
+        await instance.CompleteAsync();
+
+        // Act
+        var ex = await Record.ExceptionAsync(() => instance.UpdateStateAsync(newState));
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => instance.UpdateState(newState));
+        Assert.IsType<InvalidOperationException>(ex);
     }
 
     [Fact]
-    public void UpdateState_CallsUpdateStateOnStateProvider()
+    public async Task UpdateStateAsync_CallsUpdateStateOnStateProvider()
     {
         // Arrange
         var instanceId = new JourneyInstanceId("instance", new Dictionary<string, StringValues>());
@@ -86,10 +118,10 @@ public class JourneyInstanceTests
         var newState = new MyState();
 
         // Act
-        instance.UpdateState(newState);
+        await instance.UpdateStateAsync(newState);
 
         // Assert
-        stateProvider.Verify(mock => mock.UpdateInstanceState(journeyName, instanceId, stateType, newState));
+        stateProvider.Verify(mock => mock.UpdateInstanceStateAsync(journeyName, instanceId, stateType, newState));
         Assert.Same(newState, instance.State);
     }
 

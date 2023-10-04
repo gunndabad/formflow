@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FormFlow.State;
 
 namespace FormFlow.Tests.Infrastructure;
@@ -15,7 +16,7 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
 
     public void Clear() => _instances.Clear();
 
-    public JourneyInstance CreateInstance(
+    public Task<JourneyInstance> CreateInstanceAsync(
         string journeyName,
         JourneyInstanceId instanceId,
         Type stateType,
@@ -38,20 +39,22 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
             state,
             properties ?? PropertiesBuilder.CreateEmpty());
 
-        return instance;
+        return Task.FromResult(instance);
     }
 
-    public void CompleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task CompleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         _instances[instanceId].Completed = true;
+        return Task.CompletedTask;
     }
 
-    public void DeleteInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task DeleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         _instances.Remove(instanceId);
+        return Task.CompletedTask;
     }
 
-    public JourneyInstance? GetInstance(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task<JourneyInstance?> GetInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
     {
         _instances.TryGetValue(instanceId, out var entry);
 
@@ -59,12 +62,13 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
             JourneyInstance.Create(this, entry.JourneyName!, instanceId, entry.StateType!, entry.State!, entry.Properties!, entry.Completed) :
             null;
 
-        return instance;
+        return Task.FromResult(instance);
     }
 
-    public void UpdateInstanceState(string journeyName, JourneyInstanceId instanceId, Type stateType, object state)
+    public Task UpdateInstanceStateAsync(string journeyName, JourneyInstanceId instanceId, Type stateType, object state)
     {
         _instances[instanceId].State = state;
+        return Task.CompletedTask;
     }
 
     private class Entry

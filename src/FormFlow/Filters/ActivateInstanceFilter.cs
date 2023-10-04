@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormFlow.Filters;
 
-internal class ActivateInstanceFilter : IResourceFilter
+internal class ActivateInstanceFilter : IAsyncResourceFilter
 {
     private readonly JourneyInstanceProvider _journeyInstanceProvider;
 
@@ -17,27 +18,26 @@ internal class ActivateInstanceFilter : IResourceFilter
         _journeyInstanceProvider = journeyInstanceProvider;
     }
 
-    public void OnResourceExecuted(ResourceExecutedContext context)
-    {
-    }
-
-    public void OnResourceExecuting(ResourceExecutingContext context)
+    public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
     {
         var activatesJourneyMarker = context.ActionDescriptor.GetProperty<ActivatesJourneyMarker>();
 
         if (activatesJourneyMarker is null)
         {
+            await next();
             return;
         }
 
-        if (_journeyInstanceProvider.TryResolveExistingInstance(context, out _))
+        var instance = await _journeyInstanceProvider.ResolveCurrentInstanceAsync(context);
+        if (instance is not null)
         {
+            await next();
             return;
         }
 
         var journeyDescriptor = _journeyInstanceProvider.ResolveJourneyDescriptor(context, throwIfNotFound: true)!;
         var state = Activator.CreateInstance(journeyDescriptor.StateType)!;
-        var newInstance = _journeyInstanceProvider.CreateInstance(context, state);
+        var newInstance = await _journeyInstanceProvider.CreateInstanceAsync(context, state);
 
         if (journeyDescriptor.AppendUniqueKey)
         {
@@ -45,6 +45,9 @@ internal class ActivateInstanceFilter : IResourceFilter
             var currentUrl = context.HttpContext.Request.GetEncodedUrl();
             var newUrl = QueryHelpers.AddQueryString(currentUrl, Constants.UniqueKeyQueryParameterName, newInstance.InstanceId.UniqueKey!);
             context.Result = new RedirectResult(newUrl);
+            return;
         }
+
+        await next();
     }
 }

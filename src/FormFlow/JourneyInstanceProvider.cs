@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +24,7 @@ public class JourneyInstanceProvider
         _optionsAccessor = optionsAccessor;
     }
 
-    public JourneyInstance CreateInstance(
+    public async Task<JourneyInstance> CreateInstanceAsync(
         ActionContext actionContext,
         object state,
         IReadOnlyDictionary<object, object>? properties = null)
@@ -43,12 +42,12 @@ public class JourneyInstanceProvider
             journeyDescriptor,
             valueProvider);
 
-        if (_stateProvider.GetInstance(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType) != null)
+        if (await _stateProvider.GetInstanceAsync(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType) != null)
         {
             throw new InvalidOperationException("Instance already exists with this ID.");
         }
 
-        return _stateProvider.CreateInstance(
+        return await _stateProvider.CreateInstanceAsync(
             journeyDescriptor.JourneyName,
             instanceId,
             journeyDescriptor.StateType,
@@ -56,7 +55,7 @@ public class JourneyInstanceProvider
             properties);
     }
 
-    public JourneyInstance<TState> CreateInstance<TState>(
+    public async Task<JourneyInstance<TState>> CreateInstanceAsync<TState>(
         ActionContext actionContext,
         TState state,
         IReadOnlyDictionary<object, object>? properties = null)
@@ -74,12 +73,12 @@ public class JourneyInstanceProvider
             journeyDescriptor,
             valueProvider);
 
-        if (_stateProvider.GetInstance(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType) != null)
+        if (await _stateProvider.GetInstanceAsync(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType) != null)
         {
             throw new InvalidOperationException("Instance already exists with this ID.");
         }
 
-        return (JourneyInstance<TState>)_stateProvider.CreateInstance(
+        return (JourneyInstance<TState>)await _stateProvider.CreateInstanceAsync(
             journeyDescriptor.JourneyName,
             instanceId,
             journeyDescriptor.StateType,
@@ -87,31 +86,26 @@ public class JourneyInstanceProvider
             properties);
     }
 
-    public JourneyInstance? GetInstance(ActionContext actionContext)
+    public async Task<JourneyInstance?> GetInstanceAsync(ActionContext actionContext)
     {
         ArgumentNullException.ThrowIfNull(actionContext);
 
         // Throw if JourneyDescriptor is missing
         ResolveJourneyDescriptor(actionContext);
 
-        if (TryResolveExistingInstance(actionContext, out var instance))
-        {
-            return instance;
-        }
-        else
-        {
-            return null;
-        }
+        return await ResolveCurrentInstanceAsync(actionContext);
     }
 
-    public JourneyInstance<TState>? GetInstance<TState>(ActionContext actionContext)
+    public async Task<JourneyInstance<TState>?> GetInstanceAsync<TState>(ActionContext actionContext)
     {
         ArgumentNullException.ThrowIfNull(actionContext);
 
         // Throw if JourneyDescriptor is missing
         ResolveJourneyDescriptor(actionContext);
 
-        if (TryResolveExistingInstance(actionContext, out var instance))
+        var instance = await ResolveCurrentInstanceAsync(actionContext);
+
+        if (instance is not null)
         {
             ThrowIfStateTypeIncompatible(typeof(TState), instance.StateType);
 
@@ -123,7 +117,7 @@ public class JourneyInstanceProvider
         }
     }
 
-    public JourneyInstance GetOrCreateInstance(
+    public async Task<JourneyInstance> GetOrCreateInstanceAsync(
         ActionContext actionContext,
         Func<object> createState,
         IReadOnlyDictionary<object, object>? properties = null)
@@ -133,7 +127,9 @@ public class JourneyInstanceProvider
 
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
-        if (TryResolveExistingInstance(actionContext, out var instance))
+        var instance = await ResolveCurrentInstanceAsync(actionContext);
+
+        if (instance is not null)
         {
             return instance;
         }
@@ -142,18 +138,18 @@ public class JourneyInstanceProvider
 
         ThrowIfStateTypeIncompatible(newState.GetType(), journeyDescriptor);
 
-        return CreateInstance(actionContext, newState, properties);
+        return await CreateInstanceAsync(actionContext, newState, properties);
     }
 
-    public JourneyInstance<TState> GetOrCreateInstance<TState>(
+    public Task<JourneyInstance<TState>> GetOrCreateInstanceAsync<TState>(
         ActionContext actionContext,
         IReadOnlyDictionary<object, object>? properties = null)
         where TState : new()
     {
-        return GetOrCreateInstance<TState>(actionContext, () => new TState(), properties);
+        return GetOrCreateInstanceAsync<TState>(actionContext, () => new TState(), properties);
     }
 
-    public JourneyInstance<TState> GetOrCreateInstance<TState>(
+    public async Task<JourneyInstance<TState>> GetOrCreateInstanceAsync<TState>(
         ActionContext actionContext,
         Func<TState> createState,
         IReadOnlyDictionary<object, object>? properties = null)
@@ -165,14 +161,16 @@ public class JourneyInstanceProvider
 
         ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
 
-        if (TryResolveExistingInstance(actionContext, out var instance))
+        var instance = await ResolveCurrentInstanceAsync(actionContext);
+
+        if (instance is not null)
         {
             return (JourneyInstance<TState>)instance;
         }
 
         var newState = createState();
 
-        return CreateInstance(actionContext, newState, properties);
+        return await CreateInstanceAsync(actionContext, newState, properties);
     }
 
     public async Task<JourneyInstance> GetOrCreateInstanceAsync(
@@ -185,7 +183,9 @@ public class JourneyInstanceProvider
 
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext)!;
 
-        if (TryResolveExistingInstance(actionContext, out var instance))
+        var instance = await ResolveCurrentInstanceAsync(actionContext);
+
+        if (instance is not null)
         {
             return instance;
         }
@@ -194,7 +194,7 @@ public class JourneyInstanceProvider
 
         ThrowIfStateTypeIncompatible(newState.GetType(), journeyDescriptor);
 
-        return CreateInstance(actionContext, newState, properties);
+        return await CreateInstanceAsync(actionContext, newState, properties);
     }
 
     public async Task<JourneyInstance<TState>> GetOrCreateInstanceAsync<TState>(
@@ -209,14 +209,16 @@ public class JourneyInstanceProvider
 
         ThrowIfStateTypeIncompatible(typeof(TState), journeyDescriptor);
 
-        if (TryResolveExistingInstance(actionContext, out var instance))
+        var instance = await ResolveCurrentInstanceAsync(actionContext);
+
+        if (instance is not null)
         {
             return (JourneyInstance<TState>)instance;
         }
 
         var newState = await createState();
 
-        return CreateInstance(actionContext, newState, properties);
+        return await CreateInstanceAsync(actionContext, newState, properties);
     }
 
     public bool IsCurrentInstance(ActionContext actionContext, JourneyInstance instance)
@@ -231,8 +233,9 @@ public class JourneyInstanceProvider
     {
         ArgumentNullException.ThrowIfNull(actionContext);
 
-        TryResolveExistingInstance(actionContext, out var currentInstance);
-        return currentInstance?.InstanceId == instanceId;
+        var journeyDescriptor = ResolveJourneyDescriptor(actionContext, throwIfNotFound: true)!;
+        var currentInstanceId = ResolveCurrentInstanceId(actionContext, journeyDescriptor);
+        return currentInstanceId == instanceId;
     }
 
     internal JourneyDescriptor? ResolveJourneyDescriptor(
@@ -261,65 +264,63 @@ public class JourneyInstanceProvider
         return journeyDescriptor;
     }
 
-    internal bool TryResolveExistingInstance(ActionContext actionContext, [MaybeNullWhen(false)] out JourneyInstance instance)
+    internal async Task<JourneyInstance?> ResolveCurrentInstanceAsync(ActionContext actionContext)
     {
         ArgumentNullException.ThrowIfNull(actionContext);
 
-        instance = default;
-
         // If we've already created a JourneyInstance for this request, use that
-        if (actionContext.HttpContext.Items.TryGetValue(typeof(JourneyInstance), out var existingInstanceObj) && existingInstanceObj is not null)
+        if (actionContext.HttpContext.Items.TryGetValue(typeof(JourneyInstance), out var currentInstanceObj) && currentInstanceObj is not null)
         {
-            instance = (JourneyInstance)existingInstanceObj;
-            return true;
+            return (JourneyInstance)currentInstanceObj;
         }
 
         var journeyDescriptor = ResolveJourneyDescriptor(actionContext, throwIfNotFound: false);
-
         if (journeyDescriptor == null)
         {
-            return false;
+            return null;
         }
 
-        var valueProvider = CreateValueProvider(actionContext);
-
-        if (!JourneyInstanceId.TryResolve(
-            journeyDescriptor,
-            valueProvider,
-            out var instanceId))
+        var instanceId = ResolveCurrentInstanceId(actionContext, journeyDescriptor);
+        if (instanceId is null)
         {
-            return false;
+            return null;
         }
 
-        var persistedInstance = _stateProvider.GetInstance(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType);
+        var persistedInstance = await _stateProvider.GetInstanceAsync(journeyDescriptor.JourneyName, instanceId.Value, journeyDescriptor.StateType);
         if (persistedInstance == null)
         {
-            return false;
+            return null;
         }
 
         if (persistedInstance.JourneyName != journeyDescriptor.JourneyName)
         {
-            return false;
+            return null;
         }
 
         if (persistedInstance.StateType != journeyDescriptor.StateType)
         {
-            return false;
+            return null;
         }
 
         // Protect against stateProvider handing back a deleted instance
         if (persistedInstance.Deleted)
         {
-            return false;
+            return null;
         }
 
         actionContext.HttpContext.Items.TryAdd(typeof(JourneyInstance), persistedInstance);
 
         // There's a race here; another thread could resolve an instance and beat us to adding it to cache.
         // Ensure we return the cached instance.
-        instance = (JourneyInstance)actionContext.HttpContext.Items[typeof(JourneyInstance)]!;
+        return (JourneyInstance)actionContext.HttpContext.Items[typeof(JourneyInstance)]!;
+    }
 
-        return true;
+    private JourneyInstanceId? ResolveCurrentInstanceId(ActionContext actionContext, JourneyDescriptor journeyDescriptor)
+    {
+        ArgumentNullException.ThrowIfNull(actionContext);
+
+        var valueProvider = CreateValueProvider(actionContext);
+        return JourneyInstanceId.TryResolve(journeyDescriptor, valueProvider, out var instanceId) ? instanceId : null;
     }
 
     private static void ThrowIfStateTypeIncompatible(Type stateType, JourneyDescriptor journeyDescriptor) =>

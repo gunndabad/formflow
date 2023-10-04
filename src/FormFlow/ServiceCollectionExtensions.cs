@@ -96,7 +96,7 @@ public static class ServiceCollectionExtensions
                 var actionContextAccessor = sp.GetRequiredService<IActionContextAccessor>();
 
                 var actionContext = actionContextAccessor.ActionContext ?? throw new InvalidOperationException("No current ActionContext.");
-                return instanceProvider.GetInstance(actionContext) ?? throw new InvalidOperationException("No current journey.");
+                return instanceProvider.GetInstanceAsync(actionContext) ?? throw new InvalidOperationException("No current journey.");
             });
         }
 

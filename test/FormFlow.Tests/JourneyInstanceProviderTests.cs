@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using FormFlow.State;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +25,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void CreateInstance_ActionHasNoMetadata_ThrowsInvalidOperationException()
+    public async Task CreateInstanceAsync_ActionHasNoMetadata_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -44,7 +45,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance(actionContext, (object)state));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.CreateInstanceAsync(actionContext, (object)state));
 
         // Act & Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -52,7 +53,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void CreateInstance_StateTypeIsIncompatible_ThrowsInvalidOperationException()
+    public async Task CreateInstanceAsync_StateTypeIsIncompatible_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -77,7 +78,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance(actionContext, (object)state));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.CreateInstanceAsync(actionContext, (object)state));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -85,7 +86,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void CreateInstance_InstanceAlreadyExists_ThrowsInvalidOperationException()
+    public async Task CreateInstanceAsync_InstanceAlreadyExists_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -109,8 +110,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -135,7 +136,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance(actionContext, state));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.CreateInstanceAsync(actionContext, state));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -143,7 +144,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void CreateInstance_CreatesInstanceInStateStore()
+    public async Task CreateInstanceAsync_CreatesInstanceInStateStore()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -158,14 +159,14 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.CreateInstance(
+            .Setup(mock => mock.CreateInstanceAsync(
                 journeyName,
                 It.IsAny<JourneyInstanceId>(),  // FIXME
                 stateType,
                 state,
                 It.Is<IReadOnlyDictionary<object, object>>(d =>
                     d.Count == 2 && (int)d["foo"] == 1 && (int)d["bar"] == 2)))
-            .Returns(
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -189,7 +190,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.CreateInstance(actionContext, state, properties);
+        var result = await instanceProvider.CreateInstanceAsync(actionContext, state, properties);
 
         // Assert
         stateProvider.Verify();
@@ -206,7 +207,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void CreateInstanceOfT_StateTypeIsIncompatible_ThrowsInvalidOperationException()
+    public async Task CreateInstanceOfT_StateTypeIsIncompatible_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -231,7 +232,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.CreateInstance(actionContext, state));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.CreateInstanceAsync(actionContext, state));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -239,7 +240,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetInstance_ActionHasNoMetadata_ThrowsInvalidOperationException()
+    public async Task GetInstanceAsync_ActionHasNoMetadata_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -259,7 +260,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetInstance(actionContext));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.GetInstanceAsync(actionContext));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -267,7 +268,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetInstance_InstanceDoesNotExist_ReturnsNull()
+    public async Task GetInstanceAsync_InstanceDoesNotExist_ReturnsNull()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -282,8 +283,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
-            .Returns((JourneyInstance?)null);
+            .Setup(mock => mock.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync((JourneyInstance?)null);
 
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -298,14 +299,14 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.GetInstance(actionContext);
+        var result = await instanceProvider.GetInstanceAsync(actionContext);
 
         // Assert
         Assert.Null(result);
     }
 
     [Fact]
-    public void GetInstance_InstanceDoesExist_ReturnsInstance()
+    public async Task GetInstanceAsync_InstanceDoesExist_ReturnsInstance()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -320,8 +321,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(mock => mock.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -344,7 +345,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.GetInstance(actionContext);
+        var result = await instanceProvider.GetInstanceAsync(actionContext);
 
         // Assert
         Assert.NotNull(result);
@@ -360,7 +361,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetInstanceOfT_StateTypeIsIncompatible_ThrowsInvalidOperationException()
+    public async Task GetInstanceOfT_StateTypeIsIncompatible_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -375,8 +376,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(mock => mock.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -399,7 +400,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetInstance<OtherTestState>(actionContext));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.GetInstanceAsync<OtherTestState>(actionContext));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -407,7 +408,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetOrCreateInstance_ActionHasNoMetadata_ThrowsInvalidOperationException()
+    public async Task GetOrCreateInstanceAsync_ActionHasNoMetadata_ThrowsInvalidOperationException()
     {
         // Arrange
         var stateProvider = new Mock<IUserInstanceStateProvider>();
@@ -421,7 +422,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(actionContext, () => new TestState()));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.GetOrCreateInstanceAsync(actionContext, () => new TestState()));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -429,7 +430,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetOrCreateInstance_InstanceDoesNotExist_CreatesInstanceInStateStore()
+    public async Task GetOrCreateInstanceAsync_InstanceDoesNotExist_CreatesInstanceInStateStore()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -444,17 +445,17 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
-            .Returns((JourneyInstance?)null);
+            .Setup(mock => mock.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync((JourneyInstance?)null);
         stateProvider
-            .Setup(mock => mock.CreateInstance(
+            .Setup(mock => mock.CreateInstanceAsync(
                 journeyName,
                 It.IsAny<JourneyInstanceId>(),  // FIXME
                 stateType,
                  It.IsAny<object>(),
                 It.Is<IReadOnlyDictionary<object, object>>(d =>
                     d.Count == 2 && (int)d["foo"] == 1 && (int)d["bar"] == 2)))
-            .Returns(
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -478,7 +479,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.GetOrCreateInstance(actionContext, () => new TestState(), properties);
+        var result = await instanceProvider.GetOrCreateInstanceAsync(actionContext, () => new TestState(), properties);
 
         // Assert
         stateProvider.Verify();
@@ -495,7 +496,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetOrCreateInstance_CreateStateStateTypeIsIncompatible_ThrowsInvalidOperationException()
+    public async Task GetOrCreateInstanceAsync_CreateStateStateTypeIsIncompatible_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -505,8 +506,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
-            .Returns((JourneyInstance?)null);
+            .Setup(mock => mock.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync((JourneyInstance?)null);
 
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -522,7 +523,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(actionContext, () => (object)new OtherTestState()));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.GetOrCreateInstanceAsync(actionContext, () => (object)new OtherTestState()));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -530,7 +531,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetOrCreateInstance_InstanceDoesExist_ReturnsExistingInstance()
+    public async Task GetOrCreateInstanceAsync_InstanceDoesExist_ReturnsExistingInstance()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -545,8 +546,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(mock => mock.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -571,7 +572,7 @@ public class JourneyInstanceProviderTests
         var executedStateFactory = false;
 
         // Act
-        var result = instanceProvider.GetOrCreateInstance(
+        var result = await instanceProvider.GetOrCreateInstanceAsync(
             actionContext,
             () =>
             {
@@ -595,7 +596,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetOrCreateInstanceOfT_CreateStateStateTypeIsIncompatible_ThrowsInvalidOperationException()
+    public async Task GetOrCreateInstanceOfT_CreateStateStateTypeIsIncompatible_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -605,8 +606,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
-            .Returns((JourneyInstance?)null);
+            .Setup(mock => mock.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync((JourneyInstance?)null);
 
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -622,8 +623,8 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(
-            () => instanceProvider.GetOrCreateInstance(actionContext, () => new OtherTestState()));
+        var ex = await Record.ExceptionAsync(
+            () => instanceProvider.GetOrCreateInstanceAsync(actionContext, () => new OtherTestState()));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -631,7 +632,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void GetOrCreateInstanceFfT_RequestedStateTypeIsIncompatible_ThrowsInvalidOperationException()
+    public async Task GetOrCreateInstanceFfT_RequestedStateTypeIsIncompatible_ThrowsInvalidOperationException()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -646,8 +647,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(mock => mock.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(mock => mock.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -670,7 +671,7 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var ex = Record.Exception(() => instanceProvider.GetOrCreateInstance(actionContext, () => new OtherTestState()));
+        var ex = await Record.ExceptionAsync(() => instanceProvider.GetOrCreateInstanceAsync(actionContext, () => new OtherTestState()));
 
         // Assert
         Assert.IsType<InvalidOperationException>(ex);
@@ -687,16 +688,6 @@ public class JourneyInstanceProviderTests
         var state = new TestState();
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
-        stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
-                JourneyInstance.Create(
-                    stateProvider.Object,
-                    journeyName,
-                    instanceId,
-                    stateType,
-                    state,
-                    properties: PropertiesBuilder.CreateEmpty()));
 
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -767,16 +758,6 @@ public class JourneyInstanceProviderTests
         var state = new TestState();
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
-        stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
-                JourneyInstance.Create(
-                    stateProvider.Object,
-                    journeyName,
-                    instanceId,
-                    stateType,
-                    state,
-                    properties: PropertiesBuilder.CreateEmpty()));
 
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -801,7 +782,7 @@ public class JourneyInstanceProviderTests
     }
 
     [Fact]
-    public void TryResolveExistingInstance_ActionHasNoMetadata_ReturnsNull()
+    public async Task ResolveCurrentInstanceAsync_ActionHasNoMetadata_ReturnsNull()
     {
         // Arrange
         var stateProvider = new Mock<IUserInstanceStateProvider>();
@@ -814,15 +795,14 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.False(result);
-        Assert.Null(instance);
+        Assert.Null(result);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_CannotExtractIdForRouteValues_ReturnsNull()
+    public async Task ResolveCurrentInstanceAsync_CannotExtractIdForRouteValues_ReturnsNull()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -846,8 +826,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -873,15 +853,14 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.False(result);
-        Assert.Null(instance);
+        Assert.Null(result);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_CannotExtractIdForRandomId_ReturnsNull()
+    public async Task ResolveCurrentInstanceAsync_CannotExtractIdForRandomId_ReturnsNull()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -902,15 +881,14 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.False(result);
-        Assert.Null(instance);
+        Assert.Null(result);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_InstanceDoesNotExistInStateStore_ReturnsNull()
+    public async Task ResolveCurrentInstanceAsync_InstanceDoesNotExistInStateStore_ReturnsNull()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -920,8 +898,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns((JourneyInstance?)null);
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync((JourneyInstance?)null);
 
         var httpContext = new DefaultHttpContext();
         httpContext.Request.QueryString = new QueryString($"?ffiid={uniqueKey}");
@@ -937,15 +915,14 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.False(result);
-        Assert.Null(instance);
+        Assert.Null(result);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_MismatchingJourneyNames_ReturnsNull()
+    public async Task ResolveCurrentInstanceAsync_MismatchingJourneyNames_ReturnsNull()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -956,8 +933,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -983,15 +960,14 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.False(result);
-        Assert.Null(instance);
+        Assert.Null(result);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_MismatchingStateType_ReturnsNull()
+    public async Task ResolveCurrentInstanceAsync_MismatchingStateType_ReturnsNull()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -1002,8 +978,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -1026,15 +1002,14 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.False(result);
-        Assert.Null(instance);
+        Assert.Null(result);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_InstanceExistsForRandomId_ReturnsInstance()
+    public async Task ResolveCurrentInstanceAsync_InstanceExistsForRandomId_ReturnsInstance()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -1044,8 +1019,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -1068,18 +1043,17 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.True(result);
-        Assert.NotNull(instance);
-        Assert.Equal(journeyName, instance!.JourneyName);
-        Assert.Equal(instanceId, instance.InstanceId);
-        Assert.Equal(stateType, instance.StateType);
+        Assert.NotNull(result);
+        Assert.Equal(journeyName, result!.JourneyName);
+        Assert.Equal(instanceId, result.InstanceId);
+        Assert.Equal(stateType, result.StateType);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_InstanceExistsForRouteValues_ReturnsInstance()
+    public async Task ResolveCurrentInstanceAsync_InstanceExistsForRouteValues_ReturnsInstance()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -1103,8 +1077,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -1132,18 +1106,17 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.True(result);
-        Assert.NotNull(instance);
-        Assert.Equal(journeyName, instance!.JourneyName);
-        Assert.Equal(instanceId, instance.InstanceId);
-        Assert.Equal(stateType, instance.StateType);
+        Assert.NotNull(result);
+        Assert.Equal(journeyName, result!.JourneyName);
+        Assert.Equal(instanceId, result.InstanceId);
+        Assert.Equal(stateType, result.StateType);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_InstanceIsDeleted_ReturnsFalse()
+    public async Task ResolveCurrentInstanceAsync_InstanceIsDeleted_ReturnsFalse()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -1153,8 +1126,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(() =>
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(() =>
             {
                 var instance = JourneyInstance.Create(
                     stateProvider.Object,
@@ -1181,15 +1154,14 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        var result = instanceProvider.TryResolveExistingInstance(actionContext, out var instance);
+        var result = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
-        Assert.False(result);
-        Assert.Null(instance);
+        Assert.Null(result);
     }
 
     [Fact]
-    public void TryResolveExistingInstance_ReturnsSameObjectWithinSameRequest()
+    public async Task ResolveCurrentInstanceAsync_ReturnsSameObjectWithinSameRequest()
     {
         // Arrange
         var journeyName = "test-flow";
@@ -1199,8 +1171,8 @@ public class JourneyInstanceProviderTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
         stateProvider
-            .Setup(s => s.GetInstance(journeyName, instanceId, stateType))
-            .Returns(() =>
+            .Setup(s => s.GetInstanceAsync(journeyName, instanceId, stateType))
+            .ReturnsAsync(() =>
                 JourneyInstance.Create(
                     stateProvider.Object,
                     journeyName,
@@ -1223,8 +1195,8 @@ public class JourneyInstanceProviderTests
         var instanceProvider = new JourneyInstanceProvider(stateProvider.Object, _options);
 
         // Act
-        instanceProvider.TryResolveExistingInstance(actionContext, out var instance1);
-        instanceProvider.TryResolveExistingInstance(actionContext, out var instance2);
+        var instance1 = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
+        var instance2 = await instanceProvider.ResolveCurrentInstanceAsync(actionContext);
 
         // Assert
         Assert.Same(instance1, instance2);

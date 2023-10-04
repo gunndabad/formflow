@@ -1,10 +1,11 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
 
 namespace FormFlow.Filters;
 
-internal class MissingInstanceFilter : IResourceFilter
+internal class MissingInstanceFilter : IAsyncResourceFilter
 {
     private readonly IOptions<FormFlowOptions> _optionsAccessor;
     private readonly JourneyInstanceProvider _journeyInstanceProvider;
@@ -15,21 +16,20 @@ internal class MissingInstanceFilter : IResourceFilter
         _journeyInstanceProvider = journeyInstanceProvider;
     }
 
-    public void OnResourceExecuted(ResourceExecutedContext context)
-    {
-    }
-
-    public void OnResourceExecuting(ResourceExecutingContext context)
+    public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
     {
         var requireInstanceMarker = context.ActionDescriptor.GetProperty<RequireInstanceMarker>();
 
         if (requireInstanceMarker is null)
         {
+            await next();
             return;
         }
 
-        if (_journeyInstanceProvider.TryResolveExistingInstance(context, out _))
+        var instance = await _journeyInstanceProvider.ResolveCurrentInstanceAsync(context);
+        if (instance is not null)
         {
+            await next();
             return;
         }
 

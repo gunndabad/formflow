@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading.Tasks;
 using FormFlow.State;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +26,7 @@ public abstract class MvcTestBase
     protected InMemoryInstanceStateProvider StateProvider =>
         (InMemoryInstanceStateProvider)Fixture.Services.GetRequiredService<IUserInstanceStateProvider>();
 
-    protected JourneyInstance<TState> CreateInstance<TState>(
+    protected async Task<JourneyInstance<TState>> CreateInstanceAsync<TState>(
         string journeyName,
         IReadOnlyDictionary<string, StringValues> keys,
         TState state,
@@ -44,7 +45,7 @@ public abstract class MvcTestBase
 
         var instanceStateProvider = Fixture.Services.GetRequiredService<IUserInstanceStateProvider>();
 
-        return (JourneyInstance<TState>)instanceStateProvider.CreateInstance(
+        return (JourneyInstance<TState>)await instanceStateProvider.CreateInstanceAsync(
             journeyName,
             instanceId,
             typeof(TState),
