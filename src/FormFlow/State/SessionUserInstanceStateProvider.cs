@@ -161,7 +161,7 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
     private class SessionEntry
     {
         public string JourneyName { get; set; } = null!;
-        public byte[] State { get; set; } = null!;
+        public string State { get; set; } = null!;
         public IReadOnlyDictionary<object, object> Properties { get; set; } = null!;
         public bool Completed { get; set; }
     }

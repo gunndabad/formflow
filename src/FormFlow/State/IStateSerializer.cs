@@ -4,6 +4,6 @@ namespace FormFlow.State;
 
 public interface IStateSerializer
 {
-    object Deserialize(Type type, byte[] bytes);
-    byte[] Serialize(Type type, object state);
+    object Deserialize(Type type, string serialized);
+    string Serialize(Type type, object state);
 }
