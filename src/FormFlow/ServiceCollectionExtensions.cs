@@ -1,7 +1,6 @@
 using System;
-using System.Linq;
-using System.Reflection;
 using FormFlow.Filters;
+using FormFlow.ModelBinding;
 using FormFlow.State;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -39,6 +38,8 @@ public static class ServiceCollectionExtensions
 
             options.Filters.Add(new ServiceFilterAttribute(typeof(MissingInstanceFilter)) { Order = MissingInstanceFilter.Order });
             options.Filters.Add(new ServiceFilterAttribute(typeof(ActivateInstanceFilter)) { Order = ActivateInstanceFilter.Order });
+
+            options.ModelBinderProviders.Insert(0, new JourneyInstanceModelBinderProvider());
         });
 
         services.Configure<RazorPagesOptions>(options =>
@@ -67,56 +68,5 @@ public static class ServiceCollectionExtensions
         services.AddFormFlow();
 
         return services;
-    }
-
-    public static IServiceCollection AddJourneyStateTypes(
-        this IServiceCollection services,
-        Assembly assembly)
-    {
-        if (services == null)
-        {
-            throw new ArgumentNullException(nameof(services));
-        }
-
-        if (assembly == null)
-        {
-            throw new ArgumentNullException(nameof(assembly));
-        }
-
-        var stateTypes = assembly.GetTypes()
-            .Where(t => t.IsPublic && !t.IsAbstract && t.GetCustomAttribute<JourneyStateAttribute>() != null);
-
-        foreach (var type in stateTypes)
-        {
-            var instanceType = typeof(JourneyInstance<>).MakeGenericType(type);
-
-            services.AddTransient(instanceType, sp =>
-            {
-                var instanceProvider = sp.GetRequiredService<JourneyInstanceProvider>();
-                var actionContextAccessor = sp.GetRequiredService<IActionContextAccessor>();
-
-                var actionContext = actionContextAccessor.ActionContext ?? throw new InvalidOperationException("No current ActionContext.");
-                return instanceProvider.GetInstanceAsync(actionContext) ?? throw new InvalidOperationException("No current journey.");
-            });
-        }
-
-        return services;
-    }
-
-    public static IServiceCollection AddJourneyStateTypes(
-        this IServiceCollection services,
-        Type fromAssemblyContainingType)
-    {
-        if (services == null)
-        {
-            throw new ArgumentNullException(nameof(services));
-        }
-
-        if (fromAssemblyContainingType == null)
-        {
-            throw new ArgumentNullException(nameof(fromAssemblyContainingType));
-        }
-
-        return AddJourneyStateTypes(services, fromAssemblyContainingType.Assembly);
     }
 }
