@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormFlow.Filters;
 
-internal class ActivateInstanceFilter : IAsyncResourceFilter
+internal class ActivateInstanceFilter : IAsyncResourceFilter, IOrderedFilter
 {
+    public const int Order = -100;  // Must run before MissingInstanceFilter
+
     private readonly JourneyInstanceProvider _journeyInstanceProvider;
 
     public ActivateInstanceFilter(JourneyInstanceProvider journeyInstanceProvider)
@@ -17,6 +19,8 @@ internal class ActivateInstanceFilter : IAsyncResourceFilter
         ArgumentNullException.ThrowIfNull(journeyInstanceProvider);
         _journeyInstanceProvider = journeyInstanceProvider;
     }
+
+    int IOrderedFilter.Order => -100;
 
     public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
     {

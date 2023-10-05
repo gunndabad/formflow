@@ -5,8 +5,10 @@ using Microsoft.Extensions.Options;
 
 namespace FormFlow.Filters;
 
-internal class MissingInstanceFilter : IAsyncResourceFilter
+internal class MissingInstanceFilter : IAsyncResourceFilter, IOrderedFilter
 {
+    public const int Order = 0;  // Must run after ActivateInstanceFilter
+
     private readonly IOptions<FormFlowOptions> _optionsAccessor;
     private readonly JourneyInstanceProvider _journeyInstanceProvider;
 
@@ -15,6 +17,8 @@ internal class MissingInstanceFilter : IAsyncResourceFilter
         _optionsAccessor = optionsAccessor;
         _journeyInstanceProvider = journeyInstanceProvider;
     }
+
+    int IOrderedFilter.Order => 0;
 
     public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
     {

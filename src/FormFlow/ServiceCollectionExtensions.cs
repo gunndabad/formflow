@@ -37,8 +37,8 @@ public static class ServiceCollectionExtensions
             options.Conventions.Add((IControllerModelConvention)conventions);
             options.Conventions.Add((IActionModelConvention)conventions);
 
-            options.Filters.Add(new ServiceFilterAttribute(typeof(MissingInstanceFilter)));
-            options.Filters.Add(new ServiceFilterAttribute(typeof(ActivateInstanceFilter)));
+            options.Filters.Add(new ServiceFilterAttribute(typeof(MissingInstanceFilter)) { Order = MissingInstanceFilter.Order });
+            options.Filters.Add(new ServiceFilterAttribute(typeof(ActivateInstanceFilter)) { Order = ActivateInstanceFilter.Order });
         });
 
         services.Configure<RazorPagesOptions>(options =>
