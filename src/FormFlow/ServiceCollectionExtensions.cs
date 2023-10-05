@@ -21,7 +21,6 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddHttpContextAccessor();
-        services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
         services.AddSingleton<JourneyInstanceProvider>();
         services.TryAddSingleton<IStateSerializer, JsonStateSerializer>();
         services.TryAddSingleton<IUserInstanceStateProvider, SessionUserInstanceStateProvider>();

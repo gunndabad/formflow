@@ -1206,12 +1206,7 @@ public class JourneyInstanceProviderTests
         HttpContext httpContext,
         ActionDescriptor actionDescriptor)
     {
-        var actionContext = new ActionContext(httpContext, httpContext.GetRouteData(), actionDescriptor);
-
-        var actionContextAccessorMock = new Mock<IActionContextAccessor>();
-        actionContextAccessorMock.SetupGet(mock => mock.ActionContext).Returns(actionContext);
-
-        return actionContext;
+        return new ActionContext(httpContext, httpContext.GetRouteData(), actionDescriptor);
     }
 
     private static JourneyInstanceId CreateIdWithRandomExtensionOnly(
