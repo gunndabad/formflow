@@ -42,13 +42,12 @@ public class JourneyInstanceProvider
             journeyDescriptor,
             valueProvider);
 
-        if (await _stateProvider.GetInstanceAsync(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType) != null)
+        if (await _stateProvider.GetInstanceAsync(instanceId, journeyDescriptor.StateType) != null)
         {
             throw new InvalidOperationException("Instance already exists with this ID.");
         }
 
         return await _stateProvider.CreateInstanceAsync(
-            journeyDescriptor.JourneyName,
             instanceId,
             journeyDescriptor.StateType,
             state,
@@ -73,13 +72,12 @@ public class JourneyInstanceProvider
             journeyDescriptor,
             valueProvider);
 
-        if (await _stateProvider.GetInstanceAsync(journeyDescriptor.JourneyName, instanceId, journeyDescriptor.StateType) != null)
+        if (await _stateProvider.GetInstanceAsync(instanceId, journeyDescriptor.StateType) != null)
         {
             throw new InvalidOperationException("Instance already exists with this ID.");
         }
 
         return (JourneyInstance<TState>)await _stateProvider.CreateInstanceAsync(
-            journeyDescriptor.JourneyName,
             instanceId,
             journeyDescriptor.StateType,
             state,
@@ -286,7 +284,7 @@ public class JourneyInstanceProvider
             return null;
         }
 
-        var persistedInstance = await _stateProvider.GetInstanceAsync(journeyDescriptor.JourneyName, instanceId.Value, journeyDescriptor.StateType);
+        var persistedInstance = await _stateProvider.GetInstanceAsync(instanceId.Value, journeyDescriptor.StateType);
         if (persistedInstance == null)
         {
             return null;

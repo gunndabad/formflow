@@ -25,7 +25,6 @@ public class EndToEndTests : MvcTestBase
     {
         // Arrange
         var instance = await StateProvider.CreateInstanceAsync(
-            journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
             state: E2ETestsState.CreateInitialState(),
@@ -41,7 +40,6 @@ public class EndToEndTests : MvcTestBase
     {
         // Arrange
         var instance = await StateProvider.CreateInstanceAsync(
-            journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
             state: E2ETestsState.CreateInitialState(),
@@ -56,7 +54,6 @@ public class EndToEndTests : MvcTestBase
     {
         // Arrange
         var instance = await StateProvider.CreateInstanceAsync(
-            journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
             state: E2ETestsState.CreateInitialState(),
@@ -82,7 +79,6 @@ public class EndToEndTests : MvcTestBase
     {
         // Arrange
         var instance = await StateProvider.CreateInstanceAsync(
-            journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
             state: E2ETestsState.CreateInitialState(),
@@ -108,7 +104,6 @@ public class EndToEndTests : MvcTestBase
     {
         // Arrange
         var instance = await StateProvider.CreateInstanceAsync(
-            journeyName: "E2ETests",
             instanceId: GenerateInstanceId(out var id, out var subid),
             stateType: typeof(E2ETestsState),
             state: E2ETestsState.CreateInitialState(),

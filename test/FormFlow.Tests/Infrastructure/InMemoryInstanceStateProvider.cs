@@ -11,13 +11,12 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
 
     public InMemoryInstanceStateProvider()
     {
-        _instances = new Dictionary<string, Entry>();
+        _instances = new();
     }
 
     public void Clear() => _instances.Clear();
 
     public Task<JourneyInstance> CreateInstanceAsync(
-        string journeyName,
         JourneyInstanceId instanceId,
         Type stateType,
         object state,
@@ -25,7 +24,6 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
     {
         _instances.Add(instanceId, new Entry()
         {
-            JourneyName = journeyName,
             StateType = stateType,
             State = state,
             Properties = properties
@@ -33,7 +31,6 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
 
         var instance = JourneyInstance.Create(
             this,
-            journeyName,
             instanceId,
             stateType,
             state,
@@ -42,30 +39,30 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
         return Task.FromResult(instance);
     }
 
-    public Task CompleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task CompleteInstanceAsync(JourneyInstanceId instanceId, Type stateType)
     {
         _instances[instanceId].Completed = true;
         return Task.CompletedTask;
     }
 
-    public Task DeleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task DeleteInstanceAsync(JourneyInstanceId instanceId, Type stateType)
     {
         _instances.Remove(instanceId);
         return Task.CompletedTask;
     }
 
-    public Task<JourneyInstance?> GetInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task<JourneyInstance?> GetInstanceAsync(JourneyInstanceId instanceId, Type stateType)
     {
         _instances.TryGetValue(instanceId, out var entry);
 
         var instance = entry != null ?
-            JourneyInstance.Create(this, entry.JourneyName!, instanceId, entry.StateType!, entry.State!, entry.Properties!, entry.Completed) :
+            JourneyInstance.Create(this, instanceId, entry.StateType!, entry.State!, entry.Properties!, entry.Completed) :
             null;
 
         return Task.FromResult(instance);
     }
 
-    public Task UpdateInstanceStateAsync(string journeyName, JourneyInstanceId instanceId, Type stateType, object state)
+    public Task UpdateInstanceStateAsync(JourneyInstanceId instanceId, Type stateType, object state)
     {
         _instances[instanceId].State = state;
         return Task.CompletedTask;
@@ -73,7 +70,6 @@ public class InMemoryInstanceStateProvider : IUserInstanceStateProvider
 
     private class Entry
     {
-        public string? JourneyName { get; set; }
         public IReadOnlyDictionary<object, object>? Properties { get; set; }
         public object? State { get; set; }
         public Type? StateType { get; set; }

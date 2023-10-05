@@ -18,12 +18,10 @@ public class JourneyInstanceTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
 
-        var journeyName = "journey";
         var stateType = typeof(MyState);
 
         var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
             stateProvider.Object,
-            journeyName,
             instanceId,
             stateType,
             new MyState(),
@@ -35,7 +33,7 @@ public class JourneyInstanceTests
         await instance.DeleteAsync();
 
         // Assert
-        stateProvider.Verify(mock => mock.DeleteInstanceAsync(journeyName, instanceId, stateType));
+        stateProvider.Verify(mock => mock.DeleteInstanceAsync(instanceId, stateType));
     }
 
     [Fact]
@@ -46,12 +44,10 @@ public class JourneyInstanceTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
 
-        var journeyName = "journey";
         var stateType = typeof(MyState);
 
         var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
             stateProvider.Object,
-            journeyName,
             instanceId,
             stateType,
             new MyState(),
@@ -63,7 +59,7 @@ public class JourneyInstanceTests
         await instance.CompleteAsync();
 
         // Assert
-        stateProvider.Verify(mock => mock.CompleteInstanceAsync(journeyName, instanceId, stateType));
+        stateProvider.Verify(mock => mock.CompleteInstanceAsync(instanceId, stateType));
     }
 
     [Fact]
@@ -74,12 +70,10 @@ public class JourneyInstanceTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
 
-        var journeyName = "journey";
         var stateType = typeof(MyState);
 
         var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
             stateProvider.Object,
-            journeyName,
             instanceId,
             stateType,
             new MyState(),
@@ -104,12 +98,10 @@ public class JourneyInstanceTests
 
         var stateProvider = new Mock<IUserInstanceStateProvider>();
 
-        var journeyName = "journey";
         var stateType = typeof(MyState);
 
         var instance = (JourneyInstance<MyState>)JourneyInstance.Create(
             stateProvider.Object,
-            journeyName,
             instanceId,
             stateType,
             new MyState(),
@@ -121,7 +113,7 @@ public class JourneyInstanceTests
         await instance.UpdateStateAsync(newState);
 
         // Assert
-        stateProvider.Verify(mock => mock.UpdateInstanceStateAsync(journeyName, instanceId, stateType, newState));
+        stateProvider.Verify(mock => mock.UpdateInstanceStateAsync(instanceId, stateType, newState));
         Assert.Same(newState, instance.State);
     }
 

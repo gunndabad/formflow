@@ -11,7 +11,6 @@ public class JourneyInstance
 
     internal JourneyInstance(
         IUserInstanceStateProvider stateProvider,
-        string journeyName,
         JourneyInstanceId instanceId,
         Type stateType,
         object state,
@@ -19,7 +18,6 @@ public class JourneyInstance
         bool completed = false)
     {
         _stateProvider = stateProvider ?? throw new ArgumentNullException(nameof(stateProvider));
-        JourneyName = journeyName ?? throw new ArgumentNullException(nameof(journeyName));
         StateType = stateType ?? throw new ArgumentNullException(nameof(stateType));
         InstanceId = instanceId;
         Properties = properties ?? PropertiesBuilder.CreateEmpty();
@@ -31,7 +29,7 @@ public class JourneyInstance
 
     public bool Deleted { get; internal set; }
 
-    public string JourneyName { get; }
+    public string JourneyName => InstanceId.JourneyName;
 
     public JourneyInstanceId InstanceId { get; }
 
@@ -43,7 +41,6 @@ public class JourneyInstance
 
     public static JourneyInstance Create(
         IUserInstanceStateProvider stateProvider,
-        string journeyName,
         JourneyInstanceId instanceId,
         Type stateType,
         object state,
@@ -55,7 +52,6 @@ public class JourneyInstance
         return (JourneyInstance)Activator.CreateInstance(
             genericType,
             stateProvider,
-            journeyName,
             instanceId,
             state,
             properties,
@@ -74,7 +70,7 @@ public class JourneyInstance
             throw new InvalidOperationException("Instance has been deleted.");
         }
 
-        await _stateProvider.CompleteInstanceAsync(JourneyName, InstanceId, StateType);
+        await _stateProvider.CompleteInstanceAsync(InstanceId, StateType);
         Completed = true;
     }
 
@@ -85,7 +81,7 @@ public class JourneyInstance
             return;
         }
 
-        await _stateProvider.DeleteInstanceAsync(JourneyName, InstanceId, StateType);
+        await _stateProvider.DeleteInstanceAsync(InstanceId, StateType);
         Deleted = true;
     }
 
@@ -122,7 +118,7 @@ public class JourneyInstance
             throw new InvalidOperationException("Instance has been deleted.");
         }
 
-        await _stateProvider.UpdateInstanceStateAsync(JourneyName, InstanceId, StateType, state);
+        await _stateProvider.UpdateInstanceStateAsync(InstanceId, StateType, state);
         State = state;
     }
 }
@@ -131,12 +127,11 @@ public sealed class JourneyInstance<TState> : JourneyInstance
 {
     public JourneyInstance(
         IUserInstanceStateProvider stateProvider,
-        string journeyName,
         JourneyInstanceId instanceId,
         TState state,
         IReadOnlyDictionary<object, object> properties,
         bool completed = false)
-        : base(stateProvider, journeyName, instanceId, typeof(TState), state!, properties, completed)
+        : base(stateProvider, instanceId, typeof(TState), state!, properties, completed)
     {
     }
 

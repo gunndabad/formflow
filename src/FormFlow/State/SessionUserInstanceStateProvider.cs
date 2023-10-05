@@ -23,13 +23,11 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
     }
 
     public Task<JourneyInstance> CreateInstanceAsync(
-        string journeyName,
         JourneyInstanceId instanceId,
         Type stateType,
         object state,
         IReadOnlyDictionary<object, object>? properties)
     {
-        ArgumentNullException.ThrowIfNull(journeyName);
         ArgumentNullException.ThrowIfNull(stateType);
         ArgumentNullException.ThrowIfNull(state);
 
@@ -39,7 +37,6 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
 
         var entry = new SessionEntry()
         {
-            JourneyName = journeyName,
             State = serializedState,
             Properties = properties,
             Completed = false
@@ -47,12 +44,11 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
 
         SetSessionEntry(instanceId, entry);
 
-        return Task.FromResult(JourneyInstance.Create(this, journeyName, instanceId, stateType, state, properties));
+        return Task.FromResult(JourneyInstance.Create(this, instanceId, stateType, state, properties));
     }
 
-    public Task CompleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task CompleteInstanceAsync(JourneyInstanceId instanceId, Type stateType)
     {
-        ArgumentNullException.ThrowIfNull(journeyName);
         ArgumentNullException.ThrowIfNull(stateType);
 
         var session = GetSession();
@@ -72,9 +68,8 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         return Task.CompletedTask;
     }
 
-    public Task DeleteInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task DeleteInstanceAsync(JourneyInstanceId instanceId, Type stateType)
     {
-        ArgumentNullException.ThrowIfNull(journeyName);
         ArgumentNullException.ThrowIfNull(stateType);
 
         var session = GetSession();
@@ -92,9 +87,8 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         return Task.CompletedTask;
     }
 
-    public Task<JourneyInstance?> GetInstanceAsync(string journeyName, JourneyInstanceId instanceId, Type stateType)
+    public Task<JourneyInstance?> GetInstanceAsync(JourneyInstanceId instanceId, Type stateType)
     {
-        ArgumentNullException.ThrowIfNull(journeyName);
         ArgumentNullException.ThrowIfNull(stateType);
 
         var session = GetSession();
@@ -107,7 +101,6 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
 
             return Task.FromResult((JourneyInstance?)JourneyInstance.Create(
                 this,
-                entry.JourneyName,
                 instanceId,
                 stateType,
                 deserializedState,
@@ -120,7 +113,7 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
         }
     }
 
-    public Task UpdateInstanceStateAsync(string journeyName, JourneyInstanceId instanceId, Type stateType, object state)
+    public Task UpdateInstanceStateAsync(JourneyInstanceId instanceId, Type stateType, object state)
     {
         var session = GetSession();
         var storeKey = GetKeyForInstance(instanceId);
@@ -167,7 +160,6 @@ public class SessionUserInstanceStateProvider : IUserInstanceStateProvider
 
     private class SessionEntry
     {
-        public string JourneyName { get; set; } = null!;
         public string State { get; set; } = null!;
         public IReadOnlyDictionary<object, object> Properties { get; set; } = null!;
         public bool Completed { get; set; }
